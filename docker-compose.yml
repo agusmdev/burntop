@@ -1,0 +1,44 @@
+networks:
+  burntop-network:
+    name: coolify
+    external: true
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: packages/backend/Dockerfile
+    container_name: burntop-backend
+    ports:
+      - '8102:8000'
+    environment:
+      - APP_NAME=Burntop API
+      - DEBUG=${DEBUG:-false}
+      - SECRET_KEY=${SECRET_KEY:?SECRET_KEY is required}
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL is required}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:3102}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8102}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - LOG_JSON_FORMAT=${LOG_JSON_FORMAT:-true}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID:-}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET:-}
+    restart: unless-stopped
+    networks:
+      - burntop-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: packages/frontend/Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:8102}
+        - VITE_APP_URL=${VITE_APP_URL:-http://localhost:3102}
+        - SENTRY_DSN=${SENTRY_DSN:-}
+        - VITE_PLAUSIBLE_DOMAIN=${VITE_PLAUSIBLE_DOMAIN:-}
+    container_name: burntop-frontend
+    ports:
+      - '3102:3000'
+    environment:
+      - NODE_ENV=production
+      - SENTRY_DSN=${SENTRY_DSN:-}
+    restart: unless-stopped

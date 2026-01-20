@@ -1,0 +1,77 @@
+{
+  "name": "burntop",
+  "version": "0.0.7",
+  "description": "CLI tool for burntop - gamified AI usage tracking for developers",
+  "type": "module",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "burntop": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --outfile dist/index.js --target bun --format esm && chmod +x dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build",
+    "link": "bun run build && bun link",
+    "unlink": "bun unlink",
+    "test:local": "bun run build && bun ./dist/index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agusmdev/burntop.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "ai",
+    "usage",
+    "tracking",
+    "claude",
+    "cursor",
+    "copilot",
+    "gemini",
+    "codex",
+    "aider",
+    "continue",
+    "cline",
+    "roo-code",
+    "kilo-code",
+    "developer-tools",
+    "cli",
+    "statistics",
+    "leaderboard",
+    "gamification"
+  ],
+  "author": "burntop",
+  "license": "MIT",
+  "homepage": "https://burntop.dev",
+  "bugs": {
+    "url": "https://github.com/agusmdev/burntop/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {
+    "@types/react": "^19.2.7",
+    "commander": "^12.1.0",
+    "ink": "^6.6.0",
+    "ink-spinner": "^5.0.0",
+    "react": "^19.2.3",
+    "react-devtools-core": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.50",
+    "bun-types": "^1.3.5",
+    "typescript": "^5.8.3"
+  }
+}

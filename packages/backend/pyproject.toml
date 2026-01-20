@@ -1,0 +1,83 @@
+[project]
+name = "burntop-backend"
+version = "0.1.0"
+description = "FastAPI backend for burntop - gamified AI usage tracking"
+license = {text = "MIT"}
+authors = [
+    {name = "burntop contributors"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+    "fastapi-pagination>=0.12.33",
+    "fastapi-filter>=2.0.0",
+    "structlog>=24.4.0",
+    "argon2-cffi>=23.1.0",
+    "httpx>=0.28.0",
+    "aiosqlite>=0.20.0",
+    "apscheduler>=3.10.0",
+    "python-json-logger>=2.0.7",
+    "email-validator>=2.3.0",
+    "beautifulsoup4>=4.12.0",
+]
+
+[project.urls]
+Homepage = "https://burntop.dev"
+Repository = "https://github.com/agusmdev/burntop"
+Documentation = "https://burntop.dev/docs"
+"Bug Tracker" = "https://github.com/agusmdev/burntop/issues"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=6.0.0",
+    "factory-boy>=3.3.0",
+    "testcontainers[postgres]>=4.10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+    "asyncio: mark test as async",
+]
+
+[tool.coverage.run]
+source = ["src/app"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
+
+[dependency-groups]
+dev = [
+    "factory-boy>=3.3.3",
+    "httpx>=0.28.1",
+    "locust>=2.43.0",
+    "pytest-asyncio>=1.3.0",
+    "ruff>=0.14.10",
+    "testcontainers>=4.14.0",
+]

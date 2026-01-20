@@ -1,0 +1,538 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* ========================================
+   burntop.dev - Ember Design System
+   A dark-only design system with orange accents
+   ======================================== */
+
+/* ========================================
+   Custom Fonts - Geist Variable Fonts
+   ======================================== */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/GeistVF.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMonoVF.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Custom variant for dark mode (dark mode only) */
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================
+   CSS Variables / Design Tokens
+   ======================================== */
+:root {
+  /* === RADIUS === */
+  --radius: 0.5rem;
+
+  /* === EMBER ORANGE (Primary Accent) === */
+  --ember-50: #fff7ed;
+  --ember-100: #ffedd5;
+  --ember-200: #fed7aa;
+  --ember-300: #fdba74;
+  --ember-400: #fb923c;
+  --ember-500: #ff6b00;
+  --ember-600: #ea580c;
+  --ember-700: #c2410c;
+  --ember-800: #9a3412;
+  --ember-900: #7c2d12;
+
+  /* === BACKGROUNDS (Dark Mode Only) === */
+  --bg-base: #0a0a0a;
+  --bg-elevated: #0f0f0f;
+  --bg-surface: #141414;
+  --bg-overlay: #1a1a1a;
+  --bg-subtle: #1f1f1f;
+
+  /* === BORDERS === */
+  --border-subtle: #1f1f1f;
+  --border-default: #2a2a2a;
+  --border-prominent: #3a3a3a;
+  --border-focus: #ff6b00;
+
+  /* === TEXT === */
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1a1;
+  --text-tertiary: #6b6b6b;
+  --text-disabled: #4a4a4a;
+  --text-inverse: #0a0a0a;
+
+  /* === SEMANTIC COLORS === */
+  --success: #22c55e;
+  --success-muted: #166534;
+  --warning: #eab308;
+  --warning-muted: #854d0e;
+  --error: #ef4444;
+  --error-muted: #991b1b;
+  --info: #3b82f6;
+  --info-muted: #1e40af;
+
+  /* === SHADOWS === */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.7);
+  --shadow-ember: 0 0 20px rgba(255, 107, 0, 0.3);
+  --shadow-glow: 0 0 40px rgba(255, 107, 0, 0.2);
+
+  /* === GRADIENTS === */
+  --gradient-ember: linear-gradient(135deg, #ff6b00 0%, #ff8a00 50%, #ff5500 100%);
+  --gradient-surface: linear-gradient(180deg, #141414 0%, #0f0f0f 100%);
+  --gradient-glow: radial-gradient(ellipse at center, rgba(255, 107, 0, 0.15) 0%, transparent 70%);
+
+  /* === ANIMATIONS === */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* === SHADCN/UI COMPATIBLE TOKENS === */
+  /* Background & Foreground */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+
+  /* Card */
+  --card: var(--bg-elevated);
+  --card-foreground: var(--text-primary);
+
+  /* Popover */
+  --popover: var(--bg-overlay);
+  --popover-foreground: var(--text-primary);
+
+  /* Primary (Ember) */
+  --primary: var(--ember-500);
+  --primary-foreground: var(--text-inverse);
+
+  /* Secondary */
+  --secondary: var(--bg-surface);
+  --secondary-foreground: var(--text-primary);
+
+  /* Muted */
+  --muted: var(--bg-subtle);
+  --muted-foreground: var(--text-tertiary);
+
+  /* Accent */
+  --accent: var(--bg-surface);
+  --accent-foreground: var(--ember-500);
+
+  /* Destructive */
+  --destructive: var(--error);
+
+  /* Border & Input */
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--ember-500);
+
+  /* Charts */
+  --chart-1: var(--ember-500);
+  --chart-2: var(--ember-400);
+  --chart-3: var(--ember-600);
+  --chart-4: var(--ember-300);
+  --chart-5: var(--ember-700);
+
+  /* Sidebar */
+  --sidebar: var(--bg-base);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--ember-500);
+  --sidebar-primary-foreground: var(--text-inverse);
+  --sidebar-accent: var(--bg-surface);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--ember-500);
+}
+
+/* Dark mode is the only mode - apply same values */
+.dark {
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--bg-elevated);
+  --card-foreground: var(--text-primary);
+  --popover: var(--bg-overlay);
+  --popover-foreground: var(--text-primary);
+  --primary: var(--ember-500);
+  --primary-foreground: var(--text-inverse);
+  --secondary: var(--bg-surface);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--bg-subtle);
+  --muted-foreground: var(--text-tertiary);
+  --accent: var(--bg-surface);
+  --accent-foreground: var(--ember-500);
+  --destructive: var(--error);
+  --border: var(--border-default);
+  --input: var(--border-default);
+  --ring: var(--ember-500);
+  --chart-1: var(--ember-500);
+  --chart-2: var(--ember-400);
+  --chart-3: var(--ember-600);
+  --chart-4: var(--ember-300);
+  --chart-5: var(--ember-700);
+  --sidebar: var(--bg-base);
+  --sidebar-foreground: var(--text-primary);
+  --sidebar-primary: var(--ember-500);
+  --sidebar-primary-foreground: var(--text-inverse);
+  --sidebar-accent: var(--bg-surface);
+  --sidebar-accent-foreground: var(--text-primary);
+  --sidebar-border: var(--border-subtle);
+  --sidebar-ring: var(--ember-500);
+}
+
+/* ========================================
+   Tailwind v4 Theme Configuration
+   ======================================== */
+@theme inline {
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* Shadcn/UI color mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* === EMBER COLOR PALETTE === */
+  --color-ember-50: var(--ember-50);
+  --color-ember-100: var(--ember-100);
+  --color-ember-200: var(--ember-200);
+  --color-ember-300: var(--ember-300);
+  --color-ember-400: var(--ember-400);
+  --color-ember-500: var(--ember-500);
+  --color-ember-600: var(--ember-600);
+  --color-ember-700: var(--ember-700);
+  --color-ember-800: var(--ember-800);
+  --color-ember-900: var(--ember-900);
+
+  /* === BACKGROUND COLORS === */
+  --color-bg-base: var(--bg-base);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-overlay: var(--bg-overlay);
+  --color-bg-subtle: var(--bg-subtle);
+
+  /* === BORDER COLORS === */
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-prominent: var(--border-prominent);
+  --color-border-focus: var(--border-focus);
+
+  /* === TEXT COLORS === */
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+  --color-text-inverse: var(--text-inverse);
+
+  /* === SEMANTIC COLORS === */
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  --color-error: var(--error);
+  --color-error-muted: var(--error-muted);
+  --color-info: var(--info);
+  --color-info-muted: var(--info-muted);
+
+  /* === CUSTOM SHADOWS === */
+  --shadow-ember: var(--shadow-ember);
+  --shadow-glow: var(--shadow-glow);
+
+  /* === FONT FAMILIES === */
+  --font-display:
+    'Geist', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  /* === ANIMATION TIMING === */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    /* Always dark mode */
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+  }
+
+  /* Numbers and stats should use mono font */
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Display text */
+  .font-display {
+    font-family: var(--font-display);
+  }
+}
+
+/* ========================================
+   Contribution Heatmap Colors
+   ======================================== */
+.heat-0 {
+  background: var(--bg-surface);
+}
+.heat-1 {
+  background: rgba(255, 107, 0, 0.15);
+}
+.heat-2 {
+  background: rgba(255, 107, 0, 0.35);
+}
+.heat-3 {
+  background: rgba(255, 107, 0, 0.55);
+}
+.heat-4 {
+  background: rgba(255, 107, 0, 0.75);
+}
+.heat-5 {
+  background: var(--ember-500);
+}
+
+/* ========================================
+   Achievement Badge Rarity Styles
+   ======================================== */
+.badge-common {
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
+.badge-uncommon {
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  background: rgba(255, 107, 0, 0.05);
+}
+
+.badge-rare {
+  border: 1px solid var(--ember-500);
+  background: rgba(255, 107, 0, 0.1);
+  box-shadow: 0 0 10px rgba(255, 107, 0, 0.1);
+}
+
+.badge-epic {
+  border: 2px solid var(--ember-500);
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.15), rgba(255, 138, 0, 0.1));
+  box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+}
+
+.badge-legendary {
+  border: 2px solid var(--ember-400);
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.2), rgba(255, 85, 0, 0.15));
+  box-shadow: 0 0 30px rgba(255, 107, 0, 0.3);
+  animation: ember-pulse 2s ease-in-out infinite;
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+@keyframes ember-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(255, 107, 0, 0.4);
+  }
+}
+
+@keyframes stagger-in {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fire-flicker {
+  0% {
+    transform: scale(1) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1.1) rotate(2deg);
+    filter: brightness(1.2);
+  }
+}
+
+@keyframes unlock-scale {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes unlock-glow {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 107, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 60px rgba(255, 107, 0, 0.6);
+  }
+  100% {
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.2);
+  }
+}
+
+/* Stagger animation classes */
+.stagger-enter {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: stagger-in 0.6s var(--ease-out-expo) forwards;
+}
+.stagger-enter:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-enter:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger-enter:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger-enter:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger-enter:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger-enter:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+/* Streak fire animation */
+.streak-fire {
+  animation: fire-flicker 0.5s ease-in-out infinite alternate;
+}
+
+/* Achievement unlock animation */
+.achievement-unlock {
+  animation:
+    unlock-scale 0.4s var(--ease-spring) forwards,
+    unlock-glow 0.6s ease-out forwards;
+}
+
+/* Level badge glow animation for high tiers */
+@keyframes level-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.15);
+  }
+}
+
+.level-badge-glow {
+  animation: level-glow 2s ease-in-out infinite;
+}
+
+.monthly-badge-glow {
+  animation: level-glow 2s ease-in-out infinite;
+}
+
+/* ========================================
+   Page Transition Animations
+   ======================================== */
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Initial state before animation */
+.page-transition-initial {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Animated enter state */
+.page-transition-enter {
+  animation: page-fade-in 0.3s var(--ease-out-expo) forwards;
+}
+
+/* Reduced motion preference - instant transitions */
+@media (prefers-reduced-motion: reduce) {
+  .page-transition-initial {
+    opacity: 1;
+    transform: none;
+  }
+
+  .page-transition-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ========================================
+   Scrollbar Utilities
+   ======================================== */
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}

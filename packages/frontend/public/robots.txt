@@ -1,0 +1,16 @@
+# burntop.dev - AI Usage Tracking Platform
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+# Allow public profiles and leaderboard
+Allow: /
+
+# Disallow private/auth routes
+Disallow: /api/
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /login
+Disallow: /wrapped
+
+# Sitemap
+Sitemap: https://burntop.dev/sitemap.xml

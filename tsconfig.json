@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "."
+  },
+  "references": [{ "path": "packages/frontend" }, { "path": "packages/cli" }],
+  "files": [],
+  "include": []
+}
