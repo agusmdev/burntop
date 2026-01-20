@@ -12,7 +12,15 @@
  */
 
 import { getCredentials, performGitHubLogin } from '../auth/index.js';
-import { getMachineId } from '../config/index.js';
+import {
+  getMachineId,
+  getUserConfig,
+  updateConfig,
+  isFirstSync,
+  setupAutoSync,
+  removeAutoSync,
+  checkAutoSyncStatus,
+} from '../config/index.js';
 import {
   createEmptyCheckpoint,
   loadCheckpoint,
@@ -153,6 +161,14 @@ interface SyncOptions {
   dryRun?: boolean;
   /** Force full sync, ignoring any cached checkpoint */
   full?: boolean;
+  /** Enable auto-sync cronjob */
+  enableAuto?: boolean;
+  /** Disable auto-sync cronjob */
+  disableAuto?: boolean;
+  /** Show auto-sync status */
+  status?: boolean;
+  /** Skip auto-sync prompt */
+  noPrompt?: boolean;
 }
 
 /**
@@ -208,7 +224,61 @@ async function promptYesNo(question: string): Promise<boolean> {
   });
 }
 
+async function showAutoSyncStatus(): Promise<void> {
+  const status = await checkAutoSyncStatus();
+
+  console.log('\x1b[1m\x1b[38;5;208mburntop\x1b[0m - Auto-Sync Status');
+  console.log('');
+
+  if (status.enabled) {
+    console.log('\x1b[32m✓\x1b[0m Auto-sync is enabled');
+    console.log('');
+    console.log(`  Platform: ${status.platform}`);
+    if (status.nextRun) {
+      console.log(`  Next run: ${status.nextRun}`);
+    }
+    if (status.command) {
+      console.log(`  Command: ${status.command}`);
+    }
+  } else {
+    console.log('\x1b[90m○\x1b[0m Auto-sync is not enabled');
+    console.log('');
+    console.log(`  Platform: ${status.platform}`);
+    console.log('  Run "burntop sync --enable-auto" to enable');
+  }
+
+  console.log('');
+}
+
+async function enableAutoSync(): Promise<void> {
+  console.log('\x1b[1m\x1b[38;5;208mburntop\x1b[0m - Enable Auto-Sync');
+  console.log('');
+  await setupAutoSync();
+}
+
+async function disableAutoSync(): Promise<void> {
+  console.log('\x1b[1m\x1b[38;5;208mburntop\x1b[0m - Disable Auto-Sync');
+  console.log('');
+  await removeAutoSync();
+  updateConfig({ autoSync: false });
+}
+
 export async function syncCommand(options: SyncOptions): Promise<void> {
+  if (options.status) {
+    await showAutoSyncStatus();
+    return;
+  }
+
+  if (options.enableAuto) {
+    await enableAutoSync();
+    return;
+  }
+
+  if (options.disableAuto) {
+    await disableAutoSync();
+    return;
+  }
+
   console.log('');
   console.log('\x1b[1m\x1b[38;5;208mburntop\x1b[0m - Sync Usage Data');
   console.log('');
@@ -265,6 +335,42 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
   }
 
   console.log(`Logged in as: \x1b[1m${credentials.username}\x1b[0m`);
+
+  const config = getUserConfig();
+  const firstSync = isFirstSync();
+
+  if (!options.noPrompt && firstSync && config.autoSync !== true) {
+    console.log('');
+    console.log('\x1b[33m!\x1b[0m First sync detected.');
+    console.log('');
+    console.log('Enable auto-sync to automatically sync your AI usage every hour?');
+    console.log('');
+    console.log('Benefits:');
+    console.log('  • Your data is always up-to-date on burntop.dev');
+    console.log('  • Runs in the background, no manual intervention needed');
+    console.log('  • Never miss tracking your daily AI usage');
+    console.log('');
+    console.log('Sync logs will be saved to: ~/.burntop/sync.log');
+    console.log('');
+    const shouldEnable = await promptYesNo('Enable auto-sync? (Y/n): ');
+
+    if (shouldEnable) {
+      try {
+        await setupAutoSync();
+        updateConfig({ autoSync: true });
+      } catch (error) {
+        console.log('');
+        console.log('\x1b[33m!\x1b[0m Failed to enable auto-sync.');
+        console.log(`  ${error instanceof Error ? error.message : String(error)}`);
+        console.log('');
+        console.log('You can enable it later with: burntop sync --enable-auto');
+      }
+    } else {
+      updateConfig({ autoSync: false });
+    }
+
+    console.log('');
+  }
 
   // Get machine ID for multi-machine sync support
   const machineId = getMachineId();
@@ -380,7 +486,9 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
       );
     } else if (isIncremental && skippedFiles > 0) {
       // No new records but we did check files
-      console.log(`\x1b[90m○\x1b[0m ${parser.displayName}: No new data (${formatNumber(skippedFiles)} files unchanged)`);
+      console.log(
+        `\x1b[90m○\x1b[0m ${parser.displayName}: No new data (${formatNumber(skippedFiles)} files unchanged)`
+      );
     }
   }
 

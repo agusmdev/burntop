@@ -9,8 +9,10 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 
 export interface UserConfig {
-  // Future config options can be added here
+  /** Config file version */
   version?: string;
+  /** Whether auto-sync is enabled */
+  autoSync?: boolean;
 }
 
 const CONFIG_DIR = join(homedir(), '.config', 'burntop');
@@ -32,7 +34,7 @@ function ensureConfigDir(): void {
 export function getUserConfig(): UserConfig {
   try {
     if (!existsSync(CONFIG_FILE)) {
-      return { version: '1.0.0' };
+      return { version: '1.0.0', autoSync: false };
     }
 
     const content = readFileSync(CONFIG_FILE, 'utf-8');
@@ -41,10 +43,11 @@ export function getUserConfig(): UserConfig {
     // Apply defaults
     return {
       version: config.version || '1.0.0',
+      autoSync: config.autoSync ?? false,
     };
   } catch {
     // Return defaults on error
-    return { version: '1.0.0' };
+    return { version: '1.0.0', autoSync: false };
   }
 }
 

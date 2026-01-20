@@ -7,7 +7,13 @@
 
 import { Command } from 'commander';
 
-import { loginCommand, logoutCommand, statsCommand, syncCommand } from './commands/index.js';
+import {
+  loginCommand,
+  logoutCommand,
+  statsCommand,
+  syncCommand,
+  configCommand,
+} from './commands/index.js';
 
 const program = new Command();
 
@@ -43,6 +49,17 @@ program
     await logoutCommand();
   });
 
+// Config command - manage burntop settings
+program
+  .command('config')
+  .description('View or modify burntop configuration')
+  .option('--set <key> <value>', 'Set a configuration value')
+  .option('--get <key>', 'Get a configuration value')
+  .option('-l, --list', 'List all configuration values')
+  .action(async (options: { set?: string[]; get?: string; list?: boolean }) => {
+    await configCommand(options);
+  });
+
 // Sync command - upload local data to burntop.dev
 program
   .command('sync')
@@ -51,8 +68,23 @@ program
   .option('-s, --source <source>', 'Only sync specific source (e.g., claude-code)')
   .option('--dry-run', 'Scan data but do not upload')
   .option('--full', 'Force full sync, ignoring any cached checkpoint')
-  .action(async (options: { verbose?: boolean; source?: string; dryRun?: boolean; full?: boolean }) => {
-    await syncCommand(options);
-  });
+  .option('--enable-auto', 'Enable auto-sync cronjob')
+  .option('--disable-auto', 'Disable auto-sync cronjob')
+  .option('--status', 'Show auto-sync status')
+  .option('--no-prompt', 'Skip auto-sync prompt')
+  .action(
+    async (options: {
+      verbose?: boolean;
+      source?: string;
+      dryRun?: boolean;
+      full?: boolean;
+      enableAuto?: boolean;
+      disableAuto?: boolean;
+      status?: boolean;
+      noPrompt?: boolean;
+    }) => {
+      await syncCommand(options);
+    }
+  );
 
 program.parse();
