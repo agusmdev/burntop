@@ -1,6 +1,6 @@
 # burntop
 
-A gamified AI usage tracking platform for developers. Track your AI tool consumption, compete on leaderboards, earn achievements, and share your stats.
+A gamified AI usage tracking platform for developers. Track your AI tool consumption, compete on leaderboards, and share your stats.
 
 ## Overview
 
@@ -8,7 +8,6 @@ burntop helps developers visualize and gamify their AI coding assistant usage ac
 
 - **Usage Dashboard** - Track tokens, costs, and usage patterns over time
 - **Leaderboards** - Compete globally or with friends
-- **Achievements** - Unlock badges for milestones and streaks
 - **Shareable Cards** - Generate OG images and embeddable badges
 - **CLI Sync** - Automatic usage data collection from local tools
 
@@ -17,7 +16,7 @@ burntop helps developers visualize and gamify their AI coding assistant usage ac
 Run burntop directly without installing:
 
 ```bash
-bunx burntop
+bunx burntop sync
 ```
 
 Or install globally:
@@ -34,19 +33,19 @@ pnpm add -g burntop
 
 ```bash
 # Authenticate with your account
-burntop login
-
-# View your AI usage stats
-burntop stats
+bunx burntop login
 
 # Sync your local data to the cloud
-burntop sync
+bunx burntop sync
+
+# View your AI usage stats
+bunx burntop stats
 
 # View the leaderboard
-burntop leaderboard
+bunx burntop leaderboard
 
 # See all available commands
-burntop --help
+bunx burntop --help
 ```
 
 ### Supported Tools
