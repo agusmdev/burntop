@@ -210,11 +210,29 @@ class PostgresRepository[ModelType: Base, CreateSchemaType: BaseModel, UpdateSch
         # Build the ON CONFLICT DO UPDATE clause
         # stmt.excluded refers to the EXCLUDED table in PostgreSQL's ON CONFLICT clause
         # We access columns as attributes (e.g., stmt.excluded.field_name)
+
+        # Token fields that should accumulate, not replace
+        # This prevents tokens from decreasing when syncing multiple times on the same day
+        ACCUMULATIVE_FIELDS = {
+            "input_tokens",
+            "output_tokens",
+            "cache_read_tokens",
+            "cache_write_tokens",
+            "reasoning_tokens",
+            "cost",  # Cost should also accumulate since it's derived from tokens
+        }
+
         update_dict = {}
         for field in valid_update_fields:
-            # Use attribute access on stmt.excluded (same pattern as leaderboard repository)
             try:
-                update_dict[field] = getattr(stmt.excluded, field)
+                if field in ACCUMULATIVE_FIELDS:
+                    # Accumulate: add new value to existing value
+                    current_value = getattr(self._model, field)
+                    new_value = getattr(stmt.excluded, field)
+                    update_dict[field] = current_value + new_value
+                else:
+                    # Replace: normal update behavior for timestamps, etc.
+                    update_dict[field] = getattr(stmt.excluded, field)
             except AttributeError:
                 # Field doesn't exist in EXCLUDED table (shouldn't happen if field is in data)
                 # But skip it to be safe
