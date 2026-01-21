@@ -5,7 +5,7 @@ enabling idempotent sync operations. Running sync twice with the same
 data will not double-count tokens.
 
 Revision ID: 20260121_100000
-Revises: 20260115_100000
+Revises: i9j0k1l2m3n4
 Create Date: 2026-01-21
 
 """
@@ -17,7 +17,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "20260121_100000"
-down_revision: str | None = "20260115_100000"
+down_revision: str | None = "i9j0k1l2m3n4"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
