@@ -6,6 +6,7 @@
  */
 
 import { existsSync } from 'node:fs';
+
 import { getCheckpointPath } from '../config/sync-checkpoint.js';
 
 export function isFirstSync(): boolean {

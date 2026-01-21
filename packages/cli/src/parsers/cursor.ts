@@ -18,7 +18,6 @@ import { join } from 'node:path';
 
 import { Database } from 'bun:sqlite';
 
-import type { SourceCheckpoint } from '../config/sync-checkpoint.js';
 import type {
   IncrementalParseResult,
   ParseOptions,
@@ -27,6 +26,7 @@ import type {
   UsageRecord,
   UsageStats,
 } from './types.js';
+import type { SourceCheckpoint } from '../config/sync-checkpoint.js';
 
 /** Structure of Cursor composer data */
 interface CursorComposerData {

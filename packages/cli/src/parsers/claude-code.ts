@@ -11,7 +11,6 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import type { FileCheckpoint, SourceCheckpoint } from '../config/sync-checkpoint.js';
 import type {
   IncrementalParseResult,
   ParseOptions,
@@ -20,6 +19,7 @@ import type {
   UsageRecord,
   UsageStats,
 } from './types.js';
+import type { FileCheckpoint, SourceCheckpoint } from '../config/sync-checkpoint.js';
 
 /** Structure of a Claude Code assistant message with usage data */
 interface ClaudeCodeMessage {

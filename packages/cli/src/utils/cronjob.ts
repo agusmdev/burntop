@@ -5,9 +5,9 @@
  * automatic sync on Linux/macOS systems.
  */
 
+import { execSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 
 const BURNTOP_DIR = join(homedir(), '.burntop');
