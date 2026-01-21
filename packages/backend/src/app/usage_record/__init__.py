@@ -14,7 +14,7 @@ from app.usage_record.pricing import (
 from app.usage_record.repository import UsageRecordRepository
 from app.usage_record.schemas import (
     AchievementUnlockResponse,
-    SyncRecordRequest,
+    SyncMessageRequest,
     SyncRequest,
     SyncResponse,
     SyncStatsResponse,
@@ -28,7 +28,7 @@ from app.usage_record.service import UsageRecordService
 __all__ = [
     "AchievementUnlockResponse",
     "ModelPricing",
-    "SyncRecordRequest",
+    "SyncMessageRequest",
     "SyncRequest",
     "SyncResponse",
     "SyncStatsResponse",

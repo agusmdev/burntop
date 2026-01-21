@@ -22,7 +22,6 @@ import {
   checkAutoSyncStatus,
 } from '../config/index.js';
 import {
-  createEmptyCheckpoint,
   loadCheckpoint,
   saveCheckpoint,
   type SourceCheckpoint,
@@ -40,7 +39,6 @@ import {
   KiloCodeParser,
   OpenCodeParser,
   RooCodeParser,
-  type IncrementalParseResult,
   type ParseOptions,
   type ParseResult,
   type UsageRecord,
@@ -82,30 +80,42 @@ function printProgress(processed: number, total: number): void {
 }
 
 /**
- * Payload sent to the sync API endpoint
+ * Payload sent to the sync API endpoint (v2.0.0)
+ *
+ * Breaking change from v1.0.0:
+ * - Now sends individual messages with unique IDs for deduplication
+ * - One request per source (source at payload level)
+ * - Enables idempotent sync: syncing same data twice won't double-count tokens
  */
 interface SyncPayload {
   /** Version of the sync payload format */
-  version: string;
+  version: '2.0.0';
   /** Client identifier */
   client: string;
   /** Machine identifier for multi-machine sync */
   machineId: string;
   /** Timestamp when sync was initiated */
   syncedAt: string;
-  /** Usage records to sync */
-  records: SyncRecord[];
+  /** Source tool identifier (one source per request) */
+  source: string;
+  /** Individual messages to sync with their unique IDs */
+  messages: SyncMessage[];
 }
 
 /**
- * A usage record formatted for the sync API
- * Aggregated by date, source, and model for efficiency
+ * An individual message for the sync API (v2.0.0)
+ *
+ * Each message includes its unique ID from the parser for deduplication:
+ * - Claude Code: UUID from JSONL (record.id)
+ * - Cursor: bubbleId from SQLite
+ * - Continue: ${sessionId}-${index}
+ * - Cline/Roo/Kilo: Task ULID
  */
-interface SyncRecord {
-  /** Date of usage (YYYY-MM-DD) */
-  date: string;
-  /** Source tool identifier */
-  source: string;
+interface SyncMessage {
+  /** Message ID from parser (UUID, bubbleId, ULID, etc.) */
+  id: string;
+  /** Full ISO timestamp of the message */
+  timestamp: string;
   /** Model identifier */
   model: string;
   /** Token counts */
@@ -113,8 +123,8 @@ interface SyncRecord {
   outputTokens: number;
   cacheCreationTokens: number;
   cacheReadTokens: number;
-  /** Number of messages/interactions */
-  messageCount: number;
+  /** Reasoning tokens (for models that support it) */
+  reasoningTokens: number;
 }
 
 /**
@@ -143,11 +153,16 @@ interface SyncStats {
 }
 
 /**
- * Response from the sync API (FastAPI endpoint)
+ * Response from the sync API (FastAPI endpoint v2.0.0)
  */
 interface SyncResponse {
   success: boolean;
   message?: string;
+  /** Total messages received in request */
+  messagesReceived: number;
+  /** Number of new messages synced (excludes duplicates) */
+  messagesSynced: number;
+  /** Total aggregated records processed */
   recordsProcessed: number;
   newRecords: number;
   updatedRecords: number;
@@ -172,40 +187,37 @@ interface SyncOptions {
 }
 
 /**
- * Aggregate usage records by date, source, and model
+ * Group usage records by source for per-source sync requests
  */
-function aggregateRecords(records: UsageRecord[]): SyncRecord[] {
-  const aggregated = new Map<string, SyncRecord>();
+function groupRecordsBySource(records: UsageRecord[]): Map<string, UsageRecord[]> {
+  const grouped = new Map<string, UsageRecord[]>();
 
   for (const record of records) {
-    // Extract date from timestamp (YYYY-MM-DD)
-    const date = record.timestamp.split('T')[0];
-    if (!date) continue;
-
-    const key = `${date}:${record.source}:${record.model}`;
-    const existing = aggregated.get(key);
-
+    const existing = grouped.get(record.source);
     if (existing) {
-      existing.inputTokens += record.inputTokens;
-      existing.outputTokens += record.outputTokens;
-      existing.cacheCreationTokens += record.cacheCreationTokens;
-      existing.cacheReadTokens += record.cacheReadTokens;
-      existing.messageCount += 1;
+      existing.push(record);
     } else {
-      aggregated.set(key, {
-        date,
-        source: record.source,
-        model: record.model,
-        inputTokens: record.inputTokens,
-        outputTokens: record.outputTokens,
-        cacheCreationTokens: record.cacheCreationTokens,
-        cacheReadTokens: record.cacheReadTokens,
-        messageCount: 1,
-      });
+      grouped.set(record.source, [record]);
     }
   }
 
-  return Array.from(aggregated.values());
+  return grouped;
+}
+
+/**
+ * Convert UsageRecord to SyncMessage for API payload
+ */
+function recordToSyncMessage(record: UsageRecord): SyncMessage {
+  return {
+    id: record.id,
+    timestamp: record.timestamp,
+    model: record.model,
+    inputTokens: record.inputTokens,
+    outputTokens: record.outputTokens,
+    cacheCreationTokens: record.cacheCreationTokens,
+    cacheReadTokens: record.cacheReadTokens,
+    reasoningTokens: record.reasoningTokens ?? 0,
+  };
 }
 
 async function promptYesNo(question: string): Promise<boolean> {
@@ -380,7 +392,7 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
 
   // Load existing checkpoint for incremental sync (unless --full is specified)
   const existingCheckpoint = options.full ? null : loadCheckpoint();
-  const isIncrementalSync = !!existingCheckpoint && !options.full;
+  const _isIncrementalSync = !!existingCheckpoint && !options.full;
 
   if (options.verbose) {
     if (options.full) {
@@ -412,7 +424,7 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
   const allRecords: UsageRecord[] = [];
   const parseResults: Array<{ name: string; displayName: string; result: ParseResult }> = [];
   const newCheckpoints: Record<string, SourceCheckpoint> = {};
-  let totalSkippedFiles = 0;
+  let _totalSkippedFiles = 0;
 
   for (const parser of parsers) {
     // Skip if source filter is specified and doesn't match
@@ -448,7 +460,7 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
       skippedFiles = incrementalResult.skippedFiles;
       isIncremental = incrementalResult.isIncremental;
       newCheckpoints[parser.name] = incrementalResult.checkpoint;
-      totalSkippedFiles += skippedFiles;
+      _totalSkippedFiles += skippedFiles;
     } else {
       // Fall back to full parse
       result = await parser.parse(parseOptions);
@@ -510,14 +522,13 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
     return;
   }
 
-  // Aggregate records by date/source/model
-  const aggregatedRecords = aggregateRecords(allRecords);
+  // Group records by source for per-source sync requests
+  const recordsBySource = groupRecordsBySource(allRecords);
 
   console.log('');
   console.log(
     `Total: ${formatNumber(allRecords.length)} messages across ${parseResults.length} source(s)`
   );
-  console.log(`Aggregated into ${formatNumber(aggregatedRecords.length)} daily records`);
 
   // Dry run mode - don't actually upload
   if (options.dryRun) {
@@ -528,84 +539,105 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
     return;
   }
 
-  // Prepare sync payload
-  const payload: SyncPayload = {
-    version: '1.0.0',
-    client: 'burntop-cli',
-    machineId,
-    syncedAt: new Date().toISOString(),
-    records: aggregatedRecords,
-  };
-
   console.log('');
   process.stdout.write('Uploading to burntop.dev...');
 
   try {
-    // Use FastAPI v1 endpoint
-    const response = await fetch(`${API_BASE_URL}/api/v1/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${credentials.accessToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    // Track cumulative stats across all source requests
+    let totalMessagesReceived = 0;
+    let totalMessagesSynced = 0;
+    let totalNewRecords = 0;
+    let totalUpdatedRecords = 0;
+    let lastStats: SyncStats | null = null;
+    let allSucceeded = true;
+
+    // Send one request per source
+    for (const [source, records] of recordsBySource) {
+      const payload: SyncPayload = {
+        version: '2.0.0',
+        client: 'burntop-cli',
+        machineId,
+        syncedAt: new Date().toISOString(),
+        source,
+        messages: records.map(recordToSyncMessage),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${credentials.accessToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        // Clear progress
+        process.stdout.write('\r' + ' '.repeat(40) + '\r');
+
+        // Handle specific error cases
+        if (response.status === 401) {
+          console.log('\x1b[31m✗\x1b[0m Authentication failed.');
+          console.log('');
+          console.log(
+            '  Your session may have expired. Run \x1b[1mburntop login\x1b[0m to re-authenticate.'
+          );
+          process.exit(1);
+        }
+
+        if (response.status === 404) {
+          console.log('\x1b[33m!\x1b[0m Sync API not available yet.');
+          console.log('');
+          console.log('  The sync endpoint is coming soon. Your data was scanned locally.');
+          console.log('  Visit https://burntop.dev for updates.');
+          return;
+        }
+
+        const errorText = await response.text();
+        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      }
+
+      const result = (await response.json()) as SyncResponse;
+
+      if (result.success) {
+        totalMessagesReceived += result.messagesReceived;
+        totalMessagesSynced += result.messagesSynced;
+        totalNewRecords += result.newRecords;
+        totalUpdatedRecords += result.updatedRecords;
+        lastStats = result.stats;
+      } else {
+        allSucceeded = false;
+        // Clear progress
+        process.stdout.write('\r' + ' '.repeat(40) + '\r');
+        console.log(`\x1b[31m✗\x1b[0m Sync failed for ${source}.`);
+        if (result.message) {
+          console.log(`  ${result.message}`);
+        }
+      }
+    }
 
     // Clear progress
     process.stdout.write('\r' + ' '.repeat(40) + '\r');
 
-    if (!response.ok) {
-      // Handle specific error cases
-      if (response.status === 401) {
-        console.log('\x1b[31m✗\x1b[0m Authentication failed.');
-        console.log('');
-        console.log(
-          '  Your session may have expired. Run \x1b[1mburntop login\x1b[0m to re-authenticate.'
-        );
-        process.exit(1);
-      }
-
-      if (response.status === 404) {
-        console.log('\x1b[33m!\x1b[0m Sync API not available yet.');
-        console.log('');
-        console.log('  The sync endpoint is coming soon. Your data was scanned locally.');
-        console.log('  Visit https://burntop.dev for updates.');
-        return;
-      }
-
-      const errorText = await response.text();
-      throw new Error(`Server returned ${response.status}: ${errorText}`);
-    }
-
-    const result = (await response.json()) as SyncResponse;
-
-    if (result.success) {
+    if (allSucceeded && lastStats) {
       console.log('\x1b[32m✓\x1b[0m Sync complete!');
       console.log('');
 
       // Display sync statistics
-      console.log(`  Records processed: ${formatNumber(result.recordsProcessed)}`);
-      console.log(`  New records: ${formatNumber(result.newRecords)}`);
-      console.log(`  Updated records: ${formatNumber(result.updatedRecords)}`);
+      console.log(`  Messages received: ${formatNumber(totalMessagesReceived)}`);
+      console.log(`  New messages synced: ${formatNumber(totalMessagesSynced)}`);
+      if (totalMessagesReceived > totalMessagesSynced) {
+        console.log(
+          `  \x1b[90m(${formatNumber(totalMessagesReceived - totalMessagesSynced)} already synced)\x1b[0m`
+        );
+      }
+      console.log(`  New records: ${formatNumber(totalNewRecords)}`);
+      console.log(`  Updated records: ${formatNumber(totalUpdatedRecords)}`);
 
       // Display user statistics
       console.log('');
-      console.log(`  Total tokens: ${formatTokens(result.stats.totalTokens)}`);
-      console.log(`  Current streak: ${result.stats.currentStreak} days`);
-
-      // Display new achievements if any
-      if (result.newAchievements && result.newAchievements.length > 0) {
-        console.log('');
-        console.log('\x1b[1m\x1b[38;5;208m🎉 New Achievements Unlocked!\x1b[0m');
-        for (const achievement of result.newAchievements) {
-          console.log('');
-          console.log(`  \x1b[1m${achievement.name}\x1b[0m`);
-          console.log(`  ${achievement.description}`);
-          console.log(
-            `  +${achievement.xp_reward} XP • ${achievement.rarity} • Tier ${achievement.tier}`
-          );
-        }
-      }
+      console.log(`  Total tokens: ${formatTokens(lastStats.totalTokens)}`);
+      console.log(`  Current streak: ${lastStats.currentStreak} days`);
 
       // Save checkpoint after successful sync
       // This ensures we only skip files that were successfully synced
@@ -623,11 +655,7 @@ export async function syncCommand(options: SyncOptions): Promise<void> {
 
       console.log('');
       console.log(`  View your stats: https://burntop.dev/p/${credentials.username}`);
-    } else {
-      console.log('\x1b[31m✗\x1b[0m Sync failed.');
-      if (result.message) {
-        console.log(`  ${result.message}`);
-      }
+    } else if (!allSucceeded) {
       // Note: We don't save the checkpoint on failure
       // This ensures files will be re-synced on next attempt
     }

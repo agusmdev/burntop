@@ -28,6 +28,8 @@ export interface UsageRecord {
   cacheCreationTokens: number;
   /** Number of cache read tokens */
   cacheReadTokens: number;
+  /** Number of reasoning tokens (for models that support it) */
+  reasoningTokens?: number;
   /** Working directory (project path) */
   cwd?: string;
 }

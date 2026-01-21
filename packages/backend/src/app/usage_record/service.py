@@ -1,24 +1,28 @@
 """UsageRecord service layer for sync operations and usage statistics.
 
 This service handles the core sync endpoint logic:
-1. Deduplicates records (merge records for same user/date/source/model)
-2. Calculates costs using pricing engine
-3. Updates streaks (via StreakService)
-4. Returns comprehensive sync response
+1. Filters new messages using message-level deduplication
+2. Aggregates new messages by date/model
+3. Calculates costs using pricing engine
+4. Updates daily records (ADD tokens from new messages only)
+5. Stores synced message IDs for future deduplication
+6. Updates streaks (via StreakService)
+7. Returns comprehensive sync response
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date as date_type, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from app.core import BaseService
+from app.synced_message.repository import SyncedMessageIdRepository
 from app.usage_record.models import UsageRecord
 from app.usage_record.pricing import calculate_cost
 from app.usage_record.pricing_fetcher import fetch_litellm_pricing
 from app.usage_record.repository import UsageRecordRepository
 from app.usage_record.schemas import (
-    SyncRecordRequest,
+    SyncMessageRequest,
     SyncResponse,
     SyncStatsResponse,
     UsageRecordCreate,
@@ -35,68 +39,134 @@ class UsageRecordService(BaseService[UsageRecord, UsageRecordCreate, UsageRecord
     def __init__(
         self,
         repository: UsageRecordRepository,
+        synced_message_repository: SyncedMessageIdRepository | None = None,
         streak_service: "StreakService | None" = None,
     ):
         """Initialize usage record service.
 
         Args:
             repository: UsageRecord repository instance
+            synced_message_repository: Repository for message-level deduplication (required for sync)
             streak_service: Streak service for streak updates (optional)
         """
         super().__init__(repository)
         self.repository: UsageRecordRepository = repository  # Type hint for IDE
+        self._synced_message_repository = synced_message_repository
         self._streak_service = streak_service
 
     async def process_sync(
         self,
         user_id: UUID,
-        records: list[SyncRecordRequest],
-        _synced_at: datetime,
+        source: str,
+        messages: list[SyncMessageRequest],
         machine_id: str = "default",
     ) -> SyncResponse:
         """
-        Process sync request from CLI client.
+        Process sync request from CLI client with message-level deduplication.
 
         This is the main entry point for the POST /sync endpoint.
         Orchestrates the full sync workflow:
-        1. Fetch LiteLLM pricing data (cached, 1-hour TTL)
-        2. Deduplicate incoming records
-        3. Calculate costs for each record using LiteLLM pricing
-        4. Upsert records to database (using unique constraint on user_id, date, source, model, machine_id)
-        5. Update user streak (via StreakService)
-        6. Return comprehensive sync response
+        1. Extract message IDs from incoming messages
+        2. Filter to only NEW messages (not previously synced)
+        3. Aggregate new messages by date/model
+        4. Calculate costs using LiteLLM pricing
+        5. ADD to daily records (accumulate only NEW tokens)
+        6. Store synced message IDs for future deduplication
+        7. Update user streak (via StreakService)
+        8. Return comprehensive sync response
 
         Args:
             user_id: User ID performing the sync
-            records: List of usage records to sync
-            _synced_at: Timestamp when sync was initiated (unused for now)
+            source: Source tool identifier (claude-code, cursor, etc.)
+            messages: List of individual messages to sync
             machine_id: Machine identifier for multi-machine sync support
 
         Returns:
             SyncResponse with statistics
+
+        Raises:
+            RuntimeError: If synced_message_repository is not configured
         """
-        # Step 0: Fetch LiteLLM pricing (cached with 1-hour TTL)
+        # Validate repository is available for sync operations
+        if self._synced_message_repository is None:
+            raise RuntimeError(
+                "synced_message_repository is required for sync operations. "
+                "Ensure it is injected when creating UsageRecordService for sync endpoints."
+            )
+
+        messages_received = len(messages)
+
+        # Step 1: Extract message IDs and create lookup map
+        message_ids = [m.id for m in messages]
+        id_to_msg = {m.id: m for m in messages}
+
+        # Step 2: Filter to only NEW messages (not seen before)
+        new_ids = await self._synced_message_repository.filter_new_ids(
+            user_id=user_id,
+            source=source,
+            message_ids=message_ids,
+        )
+        new_messages = [id_to_msg[msg_id] for msg_id in new_ids]
+        messages_synced = len(new_messages)
+
+        # If no new messages, return early with success
+        if not new_messages:
+            # Get current streak for stats
+            streak = None
+            if self._streak_service:
+                streak = await self._streak_service.get_by_user_id(user_id)
+
+            stats = SyncStatsResponse(
+                totalTokens=0,
+                totalCost=Decimal("0.0000"),
+                currentStreak=streak.current_streak if streak else 0,
+                longestStreak=streak.longest_streak if streak else 0,
+                achievementsUnlocked=0,
+            )
+
+            return SyncResponse(
+                success=True,
+                message="No new messages to sync",
+                messagesReceived=messages_received,
+                messagesSynced=0,
+                recordsProcessed=0,
+                newRecords=0,
+                updatedRecords=0,
+                stats=stats,
+                newAchievements=[],
+            )
+
+        # Step 3: Fetch LiteLLM pricing (cached with 1-hour TTL)
         litellm_data = await fetch_litellm_pricing()
 
-        # Step 1: Deduplicate records (merge by date/source/model)
-        deduplicated = self._deduplicate_records(records)
+        # Step 4: Aggregate NEW messages by date/model
+        aggregated = self._aggregate_messages(new_messages, source)
 
-        # Step 2: Calculate costs for each record using LiteLLM pricing
-        records_with_costs = self._calculate_costs(deduplicated, user_id, machine_id, litellm_data)
+        # Step 5: Calculate costs for aggregated records
+        records_with_costs = self._calculate_costs(
+            aggregated=aggregated,
+            user_id=user_id,
+            machine_id=machine_id,
+            litellm_data=litellm_data,
+        )
 
-        # Step 3: Upsert records to database
-        # The unique constraint on (user_id, date, source, model) ensures no duplicates
+        # Step 6: Upsert to daily records (accumulates token values)
         _, new_records_count, updated_records = await self.repository.upsert_daily_records(
-            _user_id=str(
-                user_id
-            ),  # Convert UUID to str for repository (unused parameter for compatibility)
+            _user_id=str(user_id),
             records=records_with_costs,
         )
 
-        # Count total records processed
-        records_processed = len(deduplicated)
+        # Step 7: Store synced message IDs for future deduplication
+        await self._synced_message_repository.bulk_insert_ids(
+            user_id=user_id,
+            source=source,
+            message_ids=list(new_ids),
+        )
 
-        # Step 4: Calculate total tokens from this sync batch
+        # Count total records processed
+        records_processed = len(aggregated)
+
+        # Step 8: Calculate total tokens from this sync batch
         total_tokens_synced = sum(
             rec.input_tokens
             + rec.output_tokens
@@ -106,17 +176,13 @@ class UsageRecordService(BaseService[UsageRecord, UsageRecordCreate, UsageRecord
             for rec in records_with_costs
         )
 
-        # Step 5: Update streak
-        # Get streak for user to access timezone
+        # Step 9: Update streak
         streak = None
         if self._streak_service:
             streak = await self._streak_service.get_by_user_id(user_id)
 
-        # Use the most recent date from the synced records
         if self._streak_service and records_with_costs:
-            # Get the latest date from all records
             latest_date = max(rec.date for rec in records_with_costs)
-            # Use user's timezone from streak record (defaults to UTC if not set)
             user_timezone = streak.timezone if streak else "UTC"
             await self._streak_service.update_streak(
                 user_id=user_id,
@@ -131,94 +197,89 @@ class UsageRecordService(BaseService[UsageRecord, UsageRecordCreate, UsageRecord
         # Calculate total cost from this batch
         total_cost = sum(rec.cost for rec in records_with_costs)
 
-        # Build stats response (use camelCase aliases as defined in Field())
+        # Build stats response
         stats = SyncStatsResponse(
-            totalTokens=total_tokens_synced,  # Tokens from this batch
+            totalTokens=total_tokens_synced,
             totalCost=Decimal(str(total_cost)) if total_cost else Decimal("0.0000"),
             currentStreak=streak.current_streak if streak else 0,
             longestStreak=streak.longest_streak if streak else 0,
-            achievementsUnlocked=0,  # Achievement system removed
+            achievementsUnlocked=0,
         )
 
-        # Step 8: Return sync response (use camelCase aliases)
+        # Step 10: Return sync response
         return SyncResponse(
             success=True,
-            message=f"Synced {records_processed} records",
+            message=f"Synced {messages_synced} new messages",
+            messagesReceived=messages_received,
+            messagesSynced=messages_synced,
             recordsProcessed=records_processed,
             newRecords=new_records_count,
             updatedRecords=updated_records,
             stats=stats,
-            newAchievements=[],  # Achievement system removed
+            newAchievements=[],
         )
 
-    def _deduplicate_records(
+    def _aggregate_messages(
         self,
-        records: list[SyncRecordRequest],
-    ) -> list[SyncRecordRequest]:
+        messages: list[SyncMessageRequest],
+        source: str,
+    ) -> list[dict[str, Any]]:
         """
-        Deduplicate sync records by merging duplicates.
+        Aggregate messages by date and model.
 
-        Records with same date/source/model are merged by summing token counts.
-        This handles cases where CLI sends multiple records for same day/source/model
-        (e.g., if user syncs multiple times without clearing local cache).
+        Messages with same date/model are merged by summing token counts.
 
         Args:
-            records: List of sync records from CLI
+            messages: List of individual messages
+            source: Source tool identifier
 
         Returns:
-            List of deduplicated records with merged token counts
+            List of aggregated records as dictionaries
         """
-        # Group records by (date, source, model) key
-        # Store merged token counts as dict values
         merged: dict[tuple, dict[str, Any]] = {}
 
-        for record in records:
-            key = (record.date, record.source, record.model)
+        for msg in messages:
+            # Extract date from timestamp (YYYY-MM-DD)
+            date_str = msg.timestamp.split("T")[0]
+            date_obj = date_type.fromisoformat(date_str)
+
+            key = (date_obj, msg.model)
 
             if key in merged:
-                # Merge token counts into existing entry
-                merged[key]["input_tokens"] += record.input_tokens
-                merged[key]["output_tokens"] += record.output_tokens
-                merged[key]["cache_read_tokens"] += record.cache_read_tokens
-                merged[key]["cache_write_tokens"] += record.cache_write_tokens
-                merged[key]["reasoning_tokens"] += record.reasoning_tokens
-                # message_count is summed if present
-                if record.message_count is not None:
-                    if merged[key]["message_count"] is None:
-                        merged[key]["message_count"] = 0
-                    merged[key]["message_count"] += record.message_count
+                merged[key]["input_tokens"] += msg.input_tokens
+                merged[key]["output_tokens"] += msg.output_tokens
+                merged[key]["cache_read_tokens"] += msg.cache_read_tokens
+                merged[key]["cache_write_tokens"] += msg.cache_write_tokens
+                merged[key]["reasoning_tokens"] += msg.reasoning_tokens
             else:
-                # First occurrence of this key - add to dict
                 merged[key] = {
-                    "date": record.date,
-                    "source": record.source,
-                    "model": record.model,
-                    "input_tokens": record.input_tokens,
-                    "output_tokens": record.output_tokens,
-                    "cache_read_tokens": record.cache_read_tokens,
-                    "cache_write_tokens": record.cache_write_tokens,
-                    "reasoning_tokens": record.reasoning_tokens,
-                    "message_count": record.message_count,
+                    "date": date_obj,
+                    "source": source,
+                    "model": msg.model,
+                    "input_tokens": msg.input_tokens,
+                    "output_tokens": msg.output_tokens,
+                    "cache_read_tokens": msg.cache_read_tokens,
+                    "cache_write_tokens": msg.cache_write_tokens,
+                    "reasoning_tokens": msg.reasoning_tokens,
                 }
 
-        # Convert dict values back to SyncRecordRequest objects
-        return [SyncRecordRequest.model_validate(data) for data in merged.values()]
+        return list(merged.values())
 
     def _calculate_costs(
         self,
-        records: list[SyncRecordRequest],
+        aggregated: list[dict[str, Any]],
         user_id: UUID,
         machine_id: str,
         litellm_data: dict | None = None,
     ) -> list[UsageRecordCreate]:
         """
-        Calculate costs for each record using pricing engine.
+        Calculate costs for aggregated records using pricing engine.
 
-        Converts SyncRecordRequest to UsageRecordCreate with calculated cost field.
+        Converts aggregated dicts to UsageRecordCreate with calculated cost field.
         Uses LiteLLM pricing data if provided for accurate, up-to-date pricing.
 
         Args:
-            records: List of deduplicated sync records
+            aggregated: List of aggregated records as dictionaries
             user_id: User ID for record creation
             machine_id: Machine identifier for multi-machine sync
             litellm_data: Optional LiteLLM pricing data for real-time pricing
@@ -228,33 +289,31 @@ class UsageRecordService(BaseService[UsageRecord, UsageRecordCreate, UsageRecord
         """
         records_with_costs: list[UsageRecordCreate] = []
 
-        for record in records:
-            # Calculate cost using pricing engine with LiteLLM data
+        for record in aggregated:
             cost = calculate_cost(
-                model=record.model,
-                input_tokens=record.input_tokens,
-                output_tokens=record.output_tokens,
-                cache_read_tokens=record.cache_read_tokens,
-                cache_write_tokens=record.cache_write_tokens,
-                reasoning_tokens=record.reasoning_tokens,
+                model=record["model"],
+                input_tokens=record["input_tokens"],
+                output_tokens=record["output_tokens"],
+                cache_read_tokens=record["cache_read_tokens"],
+                cache_write_tokens=record["cache_write_tokens"],
+                reasoning_tokens=record["reasoning_tokens"],
                 litellm_data=litellm_data,
             )
 
-            # Create UsageRecordCreate schema
             usage_record = UsageRecordCreate(
                 user_id=user_id,
-                date=record.date,
-                source=record.source,
-                model=record.model,
+                date=record["date"],
+                source=record["source"],
+                model=record["model"],
                 machine_id=machine_id,
-                input_tokens=record.input_tokens,
-                output_tokens=record.output_tokens,
-                cache_read_tokens=record.cache_read_tokens,
-                cache_write_tokens=record.cache_write_tokens,
-                reasoning_tokens=record.reasoning_tokens,
+                input_tokens=record["input_tokens"],
+                output_tokens=record["output_tokens"],
+                cache_read_tokens=record["cache_read_tokens"],
+                cache_write_tokens=record["cache_write_tokens"],
+                reasoning_tokens=record["reasoning_tokens"],
                 cost=cost,
-                usage_timestamp=datetime.now(UTC),  # Current time
-                synced_at=datetime.now(UTC),  # Set sync timestamp
+                usage_timestamp=datetime.now(UTC),
+                synced_at=datetime.now(UTC),
             )
 
             records_with_costs.append(usage_record)

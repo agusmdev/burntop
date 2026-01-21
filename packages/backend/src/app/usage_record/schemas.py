@@ -18,20 +18,28 @@ DecimalAsFloat = Annotated[
 ]
 
 
-class SyncRecordRequest(BaseModel):
+class SyncMessageRequest(BaseModel):
     """
-    Individual usage record in sync request payload.
+    Individual message with its unique ID for message-level deduplication.
 
-    Aggregated by date, source, and model for efficiency.
-    Received from CLI clients during sync operation.
+    Each message has a stable unique ID from the parser:
+    - Claude Code: UUID from JSONL (record.id)
+    - Cursor: bubbleId from SQLite
+    - Continue: ${sessionId}-${index}
+    - Cline/Roo/Kilo: Task ULID
+
+    This enables idempotent sync: syncing the same data twice won't double-count tokens.
     """
 
-    date: date_type = Field(..., description="Date of usage (YYYY-MM-DD)")
-    source: str = Field(
+    id: str = Field(
         ...,
         min_length=1,
-        max_length=50,
-        description="Source tool identifier (e.g., cursor, claude-code)",
+        max_length=100,
+        description="Message ID from parser (UUID, bubbleId, ULID, etc.)",
+    )
+    timestamp: str = Field(
+        ...,
+        description="Full ISO timestamp of the message",
     )
     model: str = Field(
         ...,
@@ -55,18 +63,7 @@ class SyncRecordRequest(BaseModel):
         default=0, ge=0, alias="reasoningTokens", description="Reasoning tokens used"
     )
 
-    # Optional fields
-    message_count: int | None = Field(
-        default=None, ge=0, alias="messageCount", description="Number of messages/interactions"
-    )
-
-    model_config = {"populate_by_name": True}  # Allow both snake_case and camelCase
-
-    @field_validator("source")
-    @classmethod
-    def validate_source(cls, v: str) -> str:
-        """Normalize source to lowercase."""
-        return v.lower()
+    model_config = {"populate_by_name": True}
 
     @field_validator("model")
     @classmethod
@@ -77,12 +74,18 @@ class SyncRecordRequest(BaseModel):
 
 class SyncRequest(BaseModel):
     """
-    Sync request payload from CLI.
+    Sync request payload from CLI (v2.0.0).
 
-    Contains metadata and list of usage records to sync.
+    Contains metadata and list of individual messages to sync.
+    Source is at payload level (one source per sync batch).
+
+    Breaking change from v1.0.0:
+    - Replaces aggregated `records` with individual `messages`
+    - Adds `source` at payload level
+    - Each message includes its unique ID for deduplication
     """
 
-    version: str = Field(..., description="Sync payload format version")
+    version: str = Field(..., description="Sync payload format version (2.0.0)")
     client: str = Field(..., description="Client identifier (e.g., burntop-cli)")
     machine_id: str = Field(
         default="default",
@@ -94,16 +97,32 @@ class SyncRequest(BaseModel):
     synced_at: datetime = Field(
         ..., alias="syncedAt", description="Timestamp when sync was initiated"
     )
-    records: list[SyncRecordRequest] = Field(..., description="Usage records to sync")
+    source: str = Field(
+        ...,
+        min_length=1,
+        max_length=50,
+        description="Source tool identifier (e.g., cursor, claude-code)",
+    )
+    messages: list[SyncMessageRequest] = Field(
+        ...,
+        min_length=1,
+        description="Individual messages to sync with their unique IDs",
+    )
 
     model_config = {"populate_by_name": True}
 
-    @field_validator("records")
+    @field_validator("source")
     @classmethod
-    def validate_records_not_empty(cls, v: list[SyncRecordRequest]) -> list[SyncRecordRequest]:
-        """Ensure records list is not empty."""
+    def validate_source(cls, v: str) -> str:
+        """Normalize source to lowercase."""
+        return v.lower()
+
+    @field_validator("messages")
+    @classmethod
+    def validate_messages_not_empty(cls, v: list[SyncMessageRequest]) -> list[SyncMessageRequest]:
+        """Ensure messages list is not empty."""
         if not v:
-            raise ValueError("Records list cannot be empty")
+            raise ValueError("Messages list cannot be empty")
         return v
 
 
@@ -150,8 +169,14 @@ class SyncResponse(BaseModel):
 
     success: bool = Field(default=True, description="Whether sync was successful")
     message: str | None = Field(default=None, description="Optional message")
+    messages_received: int = Field(
+        ..., alias="messagesReceived", description="Total messages received in request"
+    )
+    messages_synced: int = Field(
+        ..., alias="messagesSynced", description="Number of new messages synced (excludes duplicates)"
+    )
     records_processed: int = Field(
-        ..., alias="recordsProcessed", description="Total records processed"
+        ..., alias="recordsProcessed", description="Total aggregated records processed"
     )
     new_records: int = Field(..., alias="newRecords", description="Number of new records created")
     updated_records: int = Field(
