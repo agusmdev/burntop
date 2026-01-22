@@ -349,4 +349,4 @@ export function createJsonLdTag(
 /**
  * Default Open Graph image
  */
-export const DEFAULT_OG_IMAGE = '/flame_logo_512px.png';
+export const DEFAULT_OG_IMAGE = '/og-home.png';
