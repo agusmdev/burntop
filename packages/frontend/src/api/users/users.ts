@@ -19,6 +19,7 @@ import type {
   ComparisonResponse,
   DashboardModelsResponse,
   DashboardToolsResponse,
+  DashboardTrendsResponse,
   FollowResponse,
   FollowStatsResponse,
   GetUserFollowersApiV1UsersUsernameFollowersGetParams,
@@ -647,6 +648,158 @@ export function useGetUserModelsApiV1UsersUsernameModelsGet<
   }
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetUserModelsApiV1UsersUsernameModelsGetQueryOptions(username, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey;
+
+  return query;
+}
+
+/**
+ * Get usage trends over time for a user.
+ *
+ * Returns daily usage data points for charting over a specified time period.
+ *
+ * Args:
+ *     username: Username to get trends for
+ *     days: Number of days to include (default 365, max 365)
+ *
+ * Returns:
+ *     Daily usage trends with date, tokens, and cost data
+ *
+ * Raises:
+ *     NotFoundError: If user not found (404)
+ * @summary Get User Trends
+ */
+export interface GetUserTrendsApiV1UsersUsernameTrendsGetParams {
+  days?: number;
+}
+
+export type getUserTrendsApiV1UsersUsernameTrendsGetResponse200 = {
+  data: DashboardTrendsResponse;
+  status: 200;
+};
+
+export type getUserTrendsApiV1UsersUsernameTrendsGetResponse422 = {
+  data: HTTPValidationError;
+  status: 422;
+};
+
+export type getUserTrendsApiV1UsersUsernameTrendsGetResponseSuccess =
+  getUserTrendsApiV1UsersUsernameTrendsGetResponse200 & {
+    headers: Headers;
+  };
+export type getUserTrendsApiV1UsersUsernameTrendsGetResponseError =
+  getUserTrendsApiV1UsersUsernameTrendsGetResponse422 & {
+    headers: Headers;
+  };
+
+export type getUserTrendsApiV1UsersUsernameTrendsGetResponse =
+  | getUserTrendsApiV1UsersUsernameTrendsGetResponseSuccess
+  | getUserTrendsApiV1UsersUsernameTrendsGetResponseError;
+
+export const getGetUserTrendsApiV1UsersUsernameTrendsGetUrl = (
+  username: string,
+  params?: GetUserTrendsApiV1UsersUsernameTrendsGetParams
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/v1/users/${username}/trends?${stringifiedParams}`
+    : `/api/v1/users/${username}/trends`;
+};
+
+export const getUserTrendsApiV1UsersUsernameTrendsGet = async (
+  username: string,
+  params?: GetUserTrendsApiV1UsersUsernameTrendsGetParams,
+  options?: RequestInit
+): Promise<getUserTrendsApiV1UsersUsernameTrendsGetResponse> => {
+  return customInstance<getUserTrendsApiV1UsersUsernameTrendsGetResponse>(
+    getGetUserTrendsApiV1UsersUsernameTrendsGetUrl(username, params),
+    {
+      ...options,
+      method: 'GET',
+    }
+  );
+};
+
+export const getGetUserTrendsApiV1UsersUsernameTrendsGetQueryKey = (
+  username?: string,
+  params?: GetUserTrendsApiV1UsersUsernameTrendsGetParams
+) => {
+  return [`/api/v1/users/${username}/trends`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetUserTrendsApiV1UsersUsernameTrendsGetQueryOptions = <
+  TData = Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>,
+  TError = HTTPValidationError,
+>(
+  username: string,
+  params?: GetUserTrendsApiV1UsersUsernameTrendsGetParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  }
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetUserTrendsApiV1UsersUsernameTrendsGetQueryKey(username, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>
+  > = ({ signal }) =>
+    getUserTrendsApiV1UsersUsernameTrendsGet(username, params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, enabled: !!username, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetUserTrendsApiV1UsersUsernameTrendsGetQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>
+>;
+export type GetUserTrendsApiV1UsersUsernameTrendsGetQueryError = HTTPValidationError;
+
+/**
+ * @summary Get User Trends
+ */
+
+export function useGetUserTrendsApiV1UsersUsernameTrendsGet<
+  TData = Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>,
+  TError = HTTPValidationError,
+>(
+  username: string,
+  params?: GetUserTrendsApiV1UsersUsernameTrendsGetParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getUserTrendsApiV1UsersUsernameTrendsGet>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customInstance>;
+  }
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetUserTrendsApiV1UsersUsernameTrendsGetQueryOptions(
+    username,
+    params,
+    options
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

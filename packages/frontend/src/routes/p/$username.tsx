@@ -37,6 +37,7 @@ import {
   useUnfollowUserApiV1UsersUsernameFollowDelete,
   useGetUserToolsApiV1UsersUsernameToolsGet,
   useGetUserModelsApiV1UsersUsernameModelsGet,
+  useGetUserTrendsApiV1UsersUsernameTrendsGet,
 } from '@/api/users/users';
 import { DashboardLayout, DashboardLayoutSkeleton } from '@/components/dashboard-layout';
 import {
@@ -193,6 +194,12 @@ function UserProfilePage() {
     isOwnProfileCheck ? { period: 'all' } : undefined
   );
 
+  // Fetch user trends from public endpoint (works for any user)
+  const { data: userTrendsResponse } = useGetUserTrendsApiV1UsersUsernameTrendsGet(username, {
+    days: 365,
+  });
+
+  // Also fetch dashboard trends for own profile (has additional data like daily trends chart)
   const { data: trendsResponse } = useGetTrendsApiV1DashboardTrendsGet(
     isOwnProfileCheck ? { days: 365 } : undefined
   );
@@ -282,10 +289,20 @@ function UserProfilePage() {
     return insightsResponse.data;
   }, [insightsResponse]);
 
-  const trendsData: DailyTrendData[] = useMemo(() => {
+  // Public user trends data (works for any profile)
+  const userTrendsData: DailyTrendData[] = useMemo(() => {
+    if (userTrendsResponse?.status !== 200) return [];
+    return userTrendsResponse.data.daily_data;
+  }, [userTrendsResponse]);
+
+  // Dashboard trends data (for own profile only, may have additional data)
+  const dashboardTrendsData: DailyTrendData[] = useMemo(() => {
     if (trendsResponse?.status !== 200) return [];
     return trendsResponse.data.daily_data;
   }, [trendsResponse]);
+
+  // Use public user trends as primary, dashboard trends as fallback for own profile
+  const trendsData = userTrendsData.length > 0 ? userTrendsData : dashboardTrendsData;
 
   const toolsData: ToolUsageData[] = useMemo(() => {
     if (toolsResponse?.status !== 200) return [];
@@ -298,37 +315,13 @@ function UserProfilePage() {
   }, [modelsResponse]);
 
   const contributionData = useMemo((): ContributionDay[] => {
-    if (trendsData.length > 0) {
-      return trendsData.map((d) => ({
-        date: d.date,
-        tokens: d.tokens,
-        sessions: undefined,
-      }));
-    }
-
-    if (!profile?.id) return [];
-
-    const data: ContributionDay[] = [];
-    const seed = profile.id
-      .split('')
-      .reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    const seededRandom = (i: number) => {
-      const x = Math.sin(seed + i) * 10000;
-      return x - Math.floor(x);
-    };
-    const now = new Date();
-
-    for (let i = 0; i < 365; i++) {
-      const dateObj = new Date(now);
-      dateObj.setDate(now.getDate() - i);
-      data.push({
-        date: dateObj.toISOString().split('T')[0],
-        tokens: Math.floor(seededRandom(i * 2) * 100000),
-        sessions: Math.floor(seededRandom(i * 2 + 1) * 10),
-      });
-    }
-    return data;
-  }, [profile?.id, trendsData]);
+    // Use actual user trends data from the public endpoint
+    return userTrendsData.map((d) => ({
+      date: d.date,
+      tokens: d.tokens,
+      sessions: undefined,
+    }));
+  }, [userTrendsData]);
 
   const followMutation = useFollowUserApiV1UsersUsernameFollowPost({
     mutation: {
