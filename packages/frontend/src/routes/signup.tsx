@@ -126,7 +126,11 @@ function SignupPage() {
         {/* Logo and Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-ember-500 to-ember-600 mb-4 shadow-lg shadow-ember-500/20">
-            <span className="text-3xl font-black text-text-inverse">B</span>
+            <img
+              src="/flame_icon_only.svg"
+              alt=""
+              className="w-10 h-10 [filter:brightness(0)_invert(1)]"
+            />
           </div>
           <h1 className="text-3xl font-bold text-text-primary mb-2">Create your account</h1>
           <p className="text-text-secondary">Join burntop and start tracking your AI usage</p>

@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Flame, LogOut, Menu, Search, Settings, User, X } from 'lucide-react';
+import { LogOut, Menu, Search, Settings, User, X } from 'lucide-react';
 import { useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -99,7 +99,11 @@ export function TopNav({
         {/* Logo - visible on mobile, hidden on desktop when sidebar is visible */}
         <Link to="/" className="flex items-center gap-3 lg:hidden">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ember-500">
-            <Flame className="h-5 w-5 text-text-inverse" />
+            <img
+              src="/flame_icon_only.svg"
+              alt=""
+              className="h-5 w-5 [filter:brightness(0)_invert(1)]"
+            />
           </div>
           <span className="text-lg font-semibold text-text-primary">burntop</span>
         </Link>

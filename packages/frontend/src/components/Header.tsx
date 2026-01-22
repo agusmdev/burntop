@@ -16,8 +16,15 @@ export default function Header() {
           <Menu size={24} />
         </button>
         <h1 className="ml-4 text-xl font-semibold">
-          <Link to="/">
-            <img src="/tanstack-word-logo-white.svg" alt="TanStack Logo" className="h-10" />
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ember-500">
+              <img
+                src="/flame_icon_only.svg"
+                alt=""
+                className="h-5 w-5 [filter:brightness(0)_invert(1)]"
+              />
+            </div>
+            <span className="text-lg font-bold text-white">burntop</span>
           </Link>
         </h1>
       </header>

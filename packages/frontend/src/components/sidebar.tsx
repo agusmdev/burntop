@@ -1,5 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Flame, Home, LayoutDashboard, LogOut, Settings, Trophy, User, Users } from 'lucide-react';
+import { Home, LayoutDashboard, LogOut, Settings, Trophy, User, Users } from 'lucide-react';
 
 import type { LucideIcon } from 'lucide-react';
 
@@ -120,7 +120,11 @@ export function Sidebar({
       <div className="flex h-16 items-center border-b border-sidebar-border px-4">
         <Link to="/" className="flex items-center gap-3" onClick={onNavClick}>
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ember-500">
-            <Flame className="h-5 w-5 text-text-inverse" />
+            <img
+              src="/flame_icon_only.svg"
+              alt=""
+              className="h-5 w-5 [filter:brightness(0)_invert(1)]"
+            />
           </div>
           {!collapsed && (
             <span className="text-lg font-semibold text-sidebar-foreground">burntop</span>

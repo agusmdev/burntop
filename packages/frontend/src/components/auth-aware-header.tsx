@@ -8,7 +8,7 @@
  */
 
 import { Link } from '@tanstack/react-router';
-import { Flame, Github, User as UserIcon } from 'lucide-react';
+import { Github, User as UserIcon } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,11 @@ export function AuthAwareHeader({ className }: AuthAwareHeaderProps) {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
           <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-ember-500 to-ember-600 group-hover:scale-105 transition-transform">
-            <Flame className="w-5 h-5 text-white" />
+            <img
+              src="/flame_icon_only.svg"
+              alt=""
+              className="w-5 h-5 [filter:brightness(0)_invert(1)]"
+            />
           </div>
           <span className="text-xl font-bold text-text-primary">burntop</span>
         </Link>

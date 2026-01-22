@@ -230,7 +230,11 @@ function Footer() {
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-ember-500 to-ember-600">
-                <Flame className="w-5 h-5 text-white" />
+                <img
+                  src="/flame_icon_only.svg"
+                  alt=""
+                  className="w-5 h-5 [filter:brightness(0)_invert(1)]"
+                />
               </div>
               <span className="text-xl font-bold text-text-primary">burntop</span>
             </Link>
