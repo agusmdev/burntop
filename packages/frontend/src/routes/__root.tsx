@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 
 import { Plausible } from '../components/Plausible';
 import { Toaster } from '../components/ui/sonner';
+import { Umami } from '../components/Umami';
 import { registerServiceWorker } from '../lib/register-sw';
 import {
   DEFAULT_OG_IMAGE,
@@ -122,6 +123,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
         <Plausible />
+        <Umami />
       </head>
       <body>
         {children}
