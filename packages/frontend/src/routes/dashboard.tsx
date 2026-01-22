@@ -13,7 +13,6 @@ import {
   Brain,
   Database,
   DollarSign,
-  LayoutDashboard,
   Lightbulb,
   TrendingUp,
   Wrench,
@@ -23,7 +22,6 @@ import {
 import type { UserResponse } from '@/api/generated.schemas';
 
 import { useGetOverviewApiV1DashboardOverviewGet } from '@/api/dashboard/dashboard';
-import { ActivityFeed } from '@/components/activity-feed';
 import { DashboardInsights } from '@/components/dashboard-insights';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { DashboardModels } from '@/components/dashboard-models';
@@ -106,8 +104,6 @@ function DashboardPage() {
     return tokens.toString();
   };
 
-  const hasData = overview.total_tokens > 0;
-
   return (
     <DashboardLayout user={topNavUser} onSignOut={() => handleLogout('/')}>
       <div className="px-4 py-8">
@@ -175,12 +171,8 @@ function DashboardPage() {
           </div>
 
           {/* Tabs for different dashboard views */}
-          <Tabs defaultValue="overview" className="w-full">
+          <Tabs defaultValue="trends" className="w-full">
             <TabsList>
-              <TabsTrigger value="overview">
-                <LayoutDashboard className="h-4 w-4" />
-                Overview
-              </TabsTrigger>
               <TabsTrigger value="trends">
                 <BarChart3 className="h-4 w-4" />
                 Trends
@@ -198,23 +190,6 @@ function DashboardPage() {
                 Insights
               </TabsTrigger>
             </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview">
-              {!hasData && (
-                <div className="mt-8 bg-bg-elevated border border-border-default rounded-lg p-8 text-center">
-                  <p className="text-text-secondary mb-4">
-                    Start syncing your AI usage data to see your stats here!
-                  </p>
-                  <p className="text-text-muted text-sm">
-                    Install the CLI:{' '}
-                    <code className="px-2 py-1 bg-bg-base rounded">npm install -g burntop</code>
-                  </p>
-                </div>
-              )}
-
-              {hasData && <ActivityFeed limit={10} />}
-            </TabsContent>
 
             {/* Trends Tab */}
             <TabsContent value="trends">

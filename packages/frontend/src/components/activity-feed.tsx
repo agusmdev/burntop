@@ -39,6 +39,80 @@ function formatRelativeTime(dateString: string): string {
 // Type alias for cleaner code
 type Activity = ActivityResponse;
 
+// Mock data for development preview
+const MOCK_ACTIVITIES: Activity[] = [
+  {
+    id: 'mock-1',
+    user_id: 'mock-user-1',
+    type: 'streak_milestone',
+    data: { days: 30 },
+    created_at: new Date(Date.now() - 1000 * 60 * 15).toISOString(), // 15 mins ago
+    user: {
+      id: 'mock-user-1',
+      username: 'sarah_dev',
+      name: 'Sarah Chen',
+      email: 'sarah@example.com',
+      image: null,
+    },
+  },
+  {
+    id: 'mock-2',
+    user_id: 'mock-user-2',
+    type: 'rank_change',
+    data: { newRank: 5, oldRank: 12 },
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+    user: {
+      id: 'mock-user-2',
+      username: 'alex_codes',
+      name: 'Alex Rivera',
+      email: 'alex@example.com',
+      image: null,
+    },
+  },
+  {
+    id: 'mock-3',
+    user_id: 'mock-user-3',
+    type: 'achievement_unlock',
+    data: { achievement: 'token_master' },
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+    user: {
+      id: 'mock-user-3',
+      username: 'jamie_ml',
+      name: 'Jamie Park',
+      email: 'jamie@example.com',
+      image: null,
+    },
+  },
+  {
+    id: 'mock-4',
+    user_id: 'mock-user-4',
+    type: 'level_up',
+    data: { level: 15 },
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // 8 hours ago
+    user: {
+      id: 'mock-user-4',
+      username: 'mike_ai',
+      name: 'Mike Johnson',
+      email: 'mike@example.com',
+      image: null,
+    },
+  },
+  {
+    id: 'mock-5',
+    user_id: 'mock-user-5',
+    type: 'streak_milestone',
+    data: { days: 7 },
+    created_at: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+    user: {
+      id: 'mock-user-5',
+      username: 'emma_tech',
+      name: 'Emma Wilson',
+      email: 'emma@example.com',
+      image: null,
+    },
+  },
+];
+
 function getActivityIcon(type: string): typeof Award {
   switch (type) {
     case 'achievement_unlock':
@@ -130,18 +204,22 @@ export interface ActivityFeedProps {
   limit?: number;
   /** Additional CSS classes */
   className?: string;
+  /** Show mock data for preview (development only) */
+  useMockData?: boolean;
 }
 
 /**
  * Activity feed component showing recent activities from followed users.
  * Fetches data from FastAPI backend using React Query hooks.
  */
-export function ActivityFeed({ limit = 10, className }: ActivityFeedProps) {
+export function ActivityFeed({ limit = 10, className, useMockData = false }: ActivityFeedProps) {
   // Fetch feed from FastAPI backend
   const { data: feedResponse, isLoading, error } = useGetFeedApiV1FeedGet({ page: 1, size: limit });
 
-  // Extract activities from response
-  const activities = feedResponse?.status === 200 ? feedResponse.data.items : [];
+  // Extract activities from response, fall back to mock data if enabled and empty
+  const apiActivities = feedResponse?.status === 200 ? feedResponse.data.items : [];
+  const activities =
+    useMockData && apiActivities.length === 0 ? MOCK_ACTIVITIES.slice(0, limit) : apiActivities;
 
   return (
     <Card className={cn('bg-bg-elevated border-border-default', className)}>
