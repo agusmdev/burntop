@@ -7,54 +7,97 @@ import { useEffect } from 'react';
 import { Plausible } from '../components/Plausible';
 import { Toaster } from '../components/ui/sonner';
 import { registerServiceWorker } from '../lib/register-sw';
+import {
+  DEFAULT_OG_IMAGE,
+  generateOGMeta,
+  generateOrganizationSchema,
+  generateTwitterCardMeta,
+  createJsonLdTag,
+  getBaseUrl,
+} from '../lib/seo';
 import { queryClient } from '../router';
 import appCss from '../styles.css?url';
 
 import type { ReactNode } from 'react';
 
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      {
-        charSet: 'utf-8',
-      },
-      {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
-        title: 'burntop.dev - Gamified AI Usage Tracking',
-      },
-      {
-        name: 'theme-color',
-        content: '#FF6B00',
-      },
-    ],
-    links: [
-      {
-        rel: 'stylesheet',
-        href: appCss,
-      },
-      {
-        rel: 'icon',
-        type: 'image/svg+xml',
-        href: '/favicon.svg',
-      },
-      {
-        rel: 'icon',
-        type: 'image/x-icon',
-        href: '/favicon.ico',
-      },
-      {
-        rel: 'apple-touch-icon',
-        href: '/flame_logo_512px.png',
-      },
-      {
-        rel: 'manifest',
-        href: '/manifest.json',
-      },
-    ],
-  }),
+  head: () => {
+    const baseUrl = getBaseUrl();
+    const defaultOgImage = `${baseUrl}${DEFAULT_OG_IMAGE}`;
+
+    return {
+      meta: [
+        {
+          charSet: 'utf-8',
+        },
+        {
+          name: 'viewport',
+          content: 'width=device-width, initial-scale=1',
+        },
+        {
+          title: 'burntop.dev - Gamified AI Usage Tracking',
+        },
+        {
+          name: 'description',
+          content:
+            'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community.',
+        },
+        {
+          name: 'keywords',
+          content:
+            'AI usage tracking, Claude, Cursor, ChatGPT, analytics, dashboard, leaderboard, developer tools',
+        },
+        {
+          name: 'theme-color',
+          content: '#FF6B00',
+        },
+        ...generateOGMeta({
+          title: 'burntop.dev - Gamified AI Usage Tracking',
+          description:
+            'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community.',
+          url: baseUrl,
+          image: defaultOgImage,
+          type: 'website',
+        }),
+        ...generateTwitterCardMeta({
+          title: 'burntop.dev - Gamified AI Usage Tracking',
+          description:
+            'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community.',
+          image: defaultOgImage,
+          card: 'summary_large_image',
+        }),
+      ],
+      links: [
+        {
+          rel: 'stylesheet',
+          href: appCss,
+        },
+        {
+          rel: 'icon',
+          type: 'image/svg+xml',
+          href: '/favicon.svg',
+        },
+        {
+          rel: 'icon',
+          type: 'image/x-icon',
+          href: '/favicon.ico',
+        },
+        {
+          rel: 'apple-touch-icon',
+          href: '/flame_logo_512px.png',
+        },
+        {
+          rel: 'manifest',
+          href: '/manifest.json',
+        },
+        {
+          rel: 'canonical',
+          href: baseUrl,
+        },
+      ],
+      scripts: [createJsonLdTag(generateOrganizationSchema())],
+    };
+  },
 
   component: RootComponent,
   shellComponent: RootDocument,

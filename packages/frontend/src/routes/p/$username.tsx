@@ -60,6 +60,7 @@ import { ShareModal } from '@/components/share-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { handleLogout, useUser } from '@/lib/auth/client';
+import { generateBreadcrumbSchema, createJsonLdTag } from '@/lib/seo';
 
 export const Route = createFileRoute('/p/$username')({
   component: UserProfilePage,
@@ -128,6 +129,20 @@ export const Route = createFileRoute('/p/$username')({
           name: 'twitter:image',
           content: ogImageUrl,
         },
+      ],
+      links: [
+        {
+          rel: 'canonical',
+          href: profileUrl,
+        },
+      ],
+      scripts: [
+        createJsonLdTag(
+          generateBreadcrumbSchema([
+            { name: 'Home', item: baseUrl },
+            { name: username, item: profileUrl },
+          ])
+        ),
       ],
     };
   },

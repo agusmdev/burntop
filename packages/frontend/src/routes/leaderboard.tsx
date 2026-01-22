@@ -23,24 +23,67 @@ import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { handleLogout, useUser } from '@/lib/auth/client';
+import {
+  DEFAULT_OG_IMAGE,
+  generateOGMeta,
+  generateTwitterCardMeta,
+  generateBreadcrumbSchema,
+  createJsonLdTag,
+  getBaseUrl,
+} from '@/lib/seo';
 
 type LeaderboardPeriod = 'all' | 'month' | 'week';
 
 export const Route = createFileRoute('/leaderboard')({
   head: () => {
-    const baseUrl =
-      process.env.NODE_ENV === 'production' ? 'https://burntop.dev' : 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
     const leaderboardUrl = `${baseUrl}/leaderboard`;
+    const defaultOgImage = `${baseUrl}${DEFAULT_OG_IMAGE}`;
 
     return {
       meta: [
-        { title: 'Leaderboard - burntop.dev' },
+        {
+          title: 'Leaderboard - burntop.dev',
+        },
         {
           name: 'description',
-          content: 'See the top AI tool users and their stats. Compete for rankings by tokens.',
+          content:
+            'See top AI tool users and their stats. Compete for rankings by tokens, costs, and streaks.',
+        },
+        {
+          name: 'keywords',
+          content: 'AI leaderboard, developer rankings, Claude, Cursor, ChatGPT usage stats',
+        },
+        ...generateOGMeta({
+          title: 'Leaderboard - burntop.dev',
+          description:
+            'See top AI tool users and their stats. Compete for rankings by tokens, costs, and streaks.',
+          url: leaderboardUrl,
+          image: defaultOgImage,
+          type: 'website',
+        }),
+        ...generateTwitterCardMeta({
+          title: 'Leaderboard - burntop.dev',
+          description:
+            'See top AI tool users and their stats. Compete for rankings by tokens, costs, and streaks.',
+          image: defaultOgImage,
+          card: 'summary_large_image',
+        }),
+      ],
+      links: [
+        {
+          rel: 'canonical',
+          href: leaderboardUrl,
         },
       ],
-      links: [{ rel: 'canonical', href: leaderboardUrl }],
+      scripts: [
+        createJsonLdTag(
+          generateBreadcrumbSchema([
+            { name: 'Home', item: baseUrl },
+            { name: 'Leaderboard', item: leaderboardUrl },
+          ])
+        ),
+      ],
     };
   },
   component: LeaderboardPage,

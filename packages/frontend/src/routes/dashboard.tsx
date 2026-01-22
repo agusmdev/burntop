@@ -32,21 +32,42 @@ import { StreakCounter } from '@/components/streak-counter';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { handleLogout, useUser } from '@/lib/auth/client';
+import { DEFAULT_OG_IMAGE, generateOGMeta, generateTwitterCardMeta, getBaseUrl } from '@/lib/seo';
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
-  head: () => ({
-    meta: [
-      {
-        title: 'Dashboard - burntop.dev',
-      },
-      {
-        name: 'description',
-        content:
-          'View your AI usage stats, track tokens, monitor costs, and see your activity heatmap. Analyze trends across Claude, ChatGPT, and other AI tools.',
-      },
-    ],
-  }),
+  head: () => {
+    const baseUrl = getBaseUrl();
+    const defaultOgImage = `${baseUrl}${DEFAULT_OG_IMAGE}`;
+
+    return {
+      meta: [
+        {
+          title: 'Dashboard - burntop.dev',
+        },
+        {
+          name: 'description',
+          content:
+            'View your AI usage stats, track tokens, monitor costs, and see your activity heatmap. Analyze trends across Claude, ChatGPT, and other AI tools.',
+        },
+        ...generateOGMeta({
+          title: 'Dashboard - burntop.dev',
+          description:
+            'View your AI usage stats, track tokens, monitor costs, and see your activity heatmap. Analyze trends across Claude, ChatGPT, and other AI tools.',
+          url: `${baseUrl}/dashboard`,
+          image: defaultOgImage,
+          type: 'website',
+        }),
+        ...generateTwitterCardMeta({
+          title: 'Dashboard - burntop.dev',
+          description:
+            'View your AI usage stats, track tokens, monitor costs, and see your activity heatmap. Analyze trends across Claude, ChatGPT, and other AI tools.',
+          image: defaultOgImage,
+          card: 'summary_large_image',
+        }),
+      ],
+    };
+  },
 });
 
 function DashboardPage() {

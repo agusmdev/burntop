@@ -16,21 +16,52 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUser } from '@/lib/auth/client';
+import { DEFAULT_OG_IMAGE, generateOGMeta, generateTwitterCardMeta, getBaseUrl } from '@/lib/seo';
 
 export const Route = createFileRoute('/wrapped')({
   component: WrappedPage,
-  head: () => ({
-    meta: [
-      {
-        title: 'Wrapped - Your Year in AI - burntop.dev',
-      },
-      {
-        name: 'description',
-        content:
-          'Your annual AI usage summary. See your top models, total tokens, longest streak, achievements unlocked, and predictions for next year.',
-      },
-    ],
-  }),
+  head: () => {
+    const baseUrl = getBaseUrl();
+    const defaultOgImage = `${baseUrl}${DEFAULT_OG_IMAGE}`;
+
+    return {
+      meta: [
+        {
+          title: 'Wrapped - Your Year in AI - burntop.dev',
+        },
+        {
+          name: 'description',
+          content:
+            'Your annual AI usage summary. See your top models, total tokens, longest streak, achievements unlocked, and predictions for next year.',
+        },
+        {
+          name: 'keywords',
+          content: 'AI wrapped, year in review, annual summary, Claude, Cursor, ChatGPT',
+        },
+        ...generateOGMeta({
+          title: 'Wrapped - Your Year in AI - burntop.dev',
+          description:
+            'Your annual AI usage summary. See your top models, total tokens, longest streak, achievements unlocked, and predictions for next year.',
+          url: `${baseUrl}/wrapped`,
+          image: defaultOgImage,
+          type: 'website',
+        }),
+        ...generateTwitterCardMeta({
+          title: 'Wrapped - Your Year in AI - burntop.dev',
+          description:
+            'Your annual AI usage summary. See your top models, total tokens, longest streak, achievements unlocked, and predictions for next year.',
+          image: defaultOgImage,
+          card: 'summary_large_image',
+        }),
+      ],
+      links: [
+        {
+          rel: 'canonical',
+          href: `${baseUrl}/wrapped`,
+        },
+      ],
+    };
+  },
 });
 
 function WrappedPage() {

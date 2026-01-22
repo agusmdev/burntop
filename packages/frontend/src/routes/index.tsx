@@ -19,22 +19,72 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DEFAULT_OG_IMAGE,
+  generateOGMeta,
+  generateTwitterCardMeta,
+  generateWebSiteSchema,
+  generateArticleSchema,
+  generateBreadcrumbSchema,
+  createJsonLdTag,
+  getBaseUrl,
+} from '@/lib/seo';
 
 export const Route = createFileRoute('/')({
   head: () => {
-    const baseUrl =
-      process.env.NODE_ENV === 'production' ? 'https://burntop.dev' : 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
+    const defaultOgImage = `${baseUrl}${DEFAULT_OG_IMAGE}`;
 
     return {
       meta: [
-        { title: 'burntop.dev - AI Usage Tracking & Analytics for Developers' },
+        {
+          title: 'burntop.dev - AI Usage Tracking & Analytics for Developers',
+        },
         {
           name: 'description',
           content:
             'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community. Get started with bunx burntop sync.',
         },
+        {
+          name: 'keywords',
+          content:
+            'AI usage tracking, Claude, Cursor, ChatGPT, developer tools, analytics, leaderboard, Open Source',
+        },
+        ...generateOGMeta({
+          title: 'burntop.dev - AI Usage Tracking & Analytics for Developers',
+          description:
+            'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community.',
+          url: baseUrl,
+          image: defaultOgImage,
+          type: 'website',
+        }),
+        ...generateTwitterCardMeta({
+          title: 'burntop.dev - AI Usage Tracking & Analytics for Developers',
+          description:
+            'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community.',
+          image: defaultOgImage,
+          card: 'summary_large_image',
+        }),
       ],
-      links: [{ rel: 'canonical', href: baseUrl }],
+      links: [
+        {
+          rel: 'canonical',
+          href: baseUrl,
+        },
+      ],
+      scripts: [
+        createJsonLdTag(generateWebSiteSchema()),
+        createJsonLdTag(
+          generateArticleSchema({
+            title: 'burntop.dev - AI Usage Tracking & Analytics for Developers',
+            description:
+              'Track your AI tool usage across Claude, Cursor, and more. Analyze costs, usage patterns, and share your stats with the developer community.',
+            url: baseUrl,
+            image: defaultOgImage,
+          })
+        ),
+        createJsonLdTag(generateBreadcrumbSchema([{ name: 'Home', item: baseUrl }])),
+      ],
     };
   },
   component: App,
