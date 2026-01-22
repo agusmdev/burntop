@@ -2,14 +2,18 @@
 
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from fastapi_pagination import Page, Params
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user, get_current_user_optional
 from app.auth.schemas import SessionUserResponse
 from app.dashboard.dependencies import get_dashboard_service
-from app.dashboard.schemas import DashboardModelsResponse, DashboardToolsResponse
+from app.dashboard.schemas import (
+    DashboardModelsResponse,
+    DashboardToolsResponse,
+    DashboardTrendsResponse,
+)
 from app.dashboard.service import DashboardService, calculate_ai_native_badge
 from app.dependencies import get_db
 from app.follow.dependencies import get_follow_service
@@ -233,6 +237,35 @@ async def get_user_models(
     # Verify user exists and get user ID
     user = await user_service.get_by_username_or_raise(username)
     return await dashboard_service.get_models_breakdown(user_id=user.id)
+
+
+@router.get("/{username}/trends", response_model=DashboardTrendsResponse)
+async def get_user_trends(
+    username: str,
+    user_service: Annotated[UserService, Depends(get_user_service)],
+    dashboard_service: Annotated[DashboardService, Depends(get_dashboard_service)],
+    days: int = Query(default=365, ge=1, le=365, description="Number of days to include (1-365)"),
+) -> DashboardTrendsResponse:
+    """
+    Get usage trends over time for a user.
+
+    Returns daily usage data points for charting over a specified time period.
+
+    Args:
+        username: Username to get trends for
+        user_service: User service instance
+        dashboard_service: Dashboard service instance
+        days: Number of days to include (default 365, max 365)
+
+    Returns:
+        Daily usage trends with date, tokens, and cost data
+
+    Raises:
+        NotFoundError: If user not found (404)
+    """
+    # Verify user exists and get user ID
+    user = await user_service.get_by_username_or_raise(username)
+    return await dashboard_service.get_trends(user_id=user.id, days=days)
 
 
 @router.get("/{username}/follow-stats", response_model=FollowStatsResponse)
