@@ -108,9 +108,7 @@ export function LeaderboardRow({
               {initials}
             </AvatarFallback>
           </Avatar>
-          <span className="text-sm font-medium text-text-primary truncate">
-            {displayName || username}
-          </span>
+          <span className="text-sm font-medium text-text-primary truncate">{username}</span>
           {/* Follow button next to name */}
           {isFollowing !== undefined && onFollowToggle && !isCurrentUser && (
             <button

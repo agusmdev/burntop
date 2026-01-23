@@ -69,11 +69,10 @@ describe('LeaderboardRow', () => {
     expect(screen.getByText('testuser')).toBeInTheDocument();
   });
 
-  it('renders display name when provided', () => {
+  it('renders username even when displayName is provided', () => {
     renderInTable(<LeaderboardRow {...defaultProps} displayName="Test User" />);
 
-    expect(screen.getByText('Test User')).toBeInTheDocument();
-    expect(screen.queryByText('testuser')).not.toBeInTheDocument();
+    expect(screen.getByText('testuser')).toBeInTheDocument();
   });
 
   it('renders tokens', () => {
