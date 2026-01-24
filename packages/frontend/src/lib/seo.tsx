@@ -93,12 +93,22 @@ export interface TwitterCardMetaProps {
   title: string;
   description: string;
   image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   card?: 'summary' | 'summary_large_image' | 'app' | 'player';
   site?: string;
 }
 
 export function generateTwitterCardMeta(props: TwitterCardMetaProps) {
-  const { title, description, image, card = 'summary_large_image', site = '@agusmdev' } = props;
+  const {
+    title,
+    description,
+    image,
+    imageWidth = 1200,
+    imageHeight = 630,
+    card = 'summary_large_image',
+    site = '@agusmdev',
+  } = props;
 
   const meta: Array<{ name: string; content: string }> = [
     {
@@ -123,10 +133,20 @@ export function generateTwitterCardMeta(props: TwitterCardMetaProps) {
   }
 
   if (image) {
-    meta.push({
-      name: 'twitter:image',
-      content: image,
-    });
+    meta.push(
+      {
+        name: 'twitter:image',
+        content: image,
+      },
+      {
+        name: 'twitter:image:width',
+        content: imageWidth.toString(),
+      },
+      {
+        name: 'twitter:image:height',
+        content: imageHeight.toString(),
+      }
+    );
   }
 
   return meta;
