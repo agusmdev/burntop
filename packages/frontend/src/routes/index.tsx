@@ -148,8 +148,7 @@ function LeaderboardPreview() {
           </>
         ) : (
           data?.map((entry) => {
-            const displayName = entry.display_name || entry.username;
-            const initials = displayName
+            const initials = entry.username
               .split(/[\s_-]/)
               .map((part) => part[0])
               .join('')
@@ -183,7 +182,7 @@ function LeaderboardPreview() {
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium text-text-primary truncate">
-                      {displayName}
+                      {entry.username}
                     </span>
                   </div>
 
