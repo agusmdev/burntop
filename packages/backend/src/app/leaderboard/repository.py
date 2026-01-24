@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from typing import Any
 
 from pydantic import BaseModel
-from sqlalchemy import and_, desc, func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import selectinload
 
@@ -115,15 +115,18 @@ class LeaderboardRepository(
         period: str = "all",
         limit: int = 1000,
     ) -> Sequence[Any]:
+        # Define the total tokens expression once to use in both SELECT and ORDER BY
+        total_tokens_expr = (
+            UsageRecord.input_tokens
+            + UsageRecord.output_tokens
+            + func.coalesce(UsageRecord.cache_read_tokens, 0)
+            + func.coalesce(UsageRecord.cache_write_tokens, 0)
+            + func.coalesce(UsageRecord.reasoning_tokens, 0)
+        )
+
         query = select(
             UsageRecord.user_id,
-            func.sum(
-                UsageRecord.input_tokens
-                + UsageRecord.output_tokens
-                + func.coalesce(UsageRecord.cache_read_tokens, 0)
-                + func.coalesce(UsageRecord.cache_write_tokens, 0)
-                + func.coalesce(UsageRecord.reasoning_tokens, 0)
-            ).label("total_tokens"),
+            func.sum(total_tokens_expr).label("total_tokens"),
             func.sum(UsageRecord.cost).label("total_cost"),
         )
 
@@ -131,7 +134,8 @@ class LeaderboardRepository(
         if cutoff_date is not None:
             query = query.where(UsageRecord.date >= cutoff_date)
 
-        query = query.group_by(UsageRecord.user_id).order_by(desc("total_tokens")).limit(limit)
+        # Use the full expression in ORDER BY to ensure proper ordering
+        query = query.group_by(UsageRecord.user_id).order_by(func.sum(total_tokens_expr).desc()).limit(limit)
 
         result = await self._session.execute(query)
         return result.all()
