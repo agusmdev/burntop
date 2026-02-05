@@ -66,7 +66,7 @@
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vite-plugin-node-polyfills": "^0.24.0",
-    "vitest": "^3.0.5",
+    "vitest": "^4.0.17",
     "web-vitals": "^5.1.0"
   }
 }
