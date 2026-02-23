@@ -292,7 +292,7 @@ export async function statsCommand(options: StatsOptions): Promise<void> {
     console.log('  - Droid (~/.factory/sessions/*.settings.json)');
     console.log('  - Gemini CLI (~/.gemini/tmp/*/chats/session-*.json)');
     console.log('  - Kilo Code (VS Code globalStorage/kilocode.kilo-code/)');
-    console.log('  - OpenCode (~/.local/share/opencode/storage/message/)');
+    console.log('  - OpenCode (~/.local/share/opencode/opencode.db, fallback: storage/message/)');
     console.log('  - Roo Code (VS Code globalStorage/rooveterinaryinc.roo-cline/)\n');
     console.log('Get started by using one of these AI tools, then run `burntop stats` again.');
     return;

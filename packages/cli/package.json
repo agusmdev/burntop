@@ -19,6 +19,7 @@
     "dev": "bun run --watch src/index.ts",
     "build": "bun build src/index.ts --outfile dist/index.js --target bun --format esm && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "bun test",
     "prepublishOnly": "bun run build",
     "link": "bun run build && bun link",
     "unlink": "bun unlink",
