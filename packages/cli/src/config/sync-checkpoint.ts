@@ -8,12 +8,16 @@
  * Checkpoint data is stored in ~/.config/burntop/sync-checkpoint.json
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { getMachineId } from './machine-id';
 
-const CONFIG_DIR = join(process.env['HOME'] || process.env['USERPROFILE'] || '', '.config', 'burntop');
+const CONFIG_DIR = join(
+  process.env['HOME'] || process.env['USERPROFILE'] || '',
+  '.config',
+  'burntop'
+);
 const CHECKPOINT_FILE = join(CONFIG_DIR, 'sync-checkpoint.json');
 
 /**
@@ -108,11 +112,7 @@ export function loadCheckpoint(): SyncCheckpoint | null {
     const checkpoint = JSON.parse(content) as SyncCheckpoint;
 
     // Validate checkpoint structure
-    if (
-      !checkpoint ||
-      checkpoint.version !== '1.0' ||
-      typeof checkpoint.sources !== 'object'
-    ) {
+    if (!checkpoint || checkpoint.version !== '1.0' || typeof checkpoint.sources !== 'object') {
       return null;
     }
 
@@ -189,7 +189,6 @@ export function createEmptyCheckpoint(): SyncCheckpoint {
 export function clearCheckpoint(): void {
   try {
     if (existsSync(CHECKPOINT_FILE)) {
-      const { unlinkSync } = require('node:fs');
       unlinkSync(CHECKPOINT_FILE);
     }
   } catch {
