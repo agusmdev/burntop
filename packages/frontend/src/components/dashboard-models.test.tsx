@@ -144,7 +144,13 @@ describe('DashboardModels', () => {
         status: 200,
         data: {
           models: [
-            { model: 'claude-3-5-sonnet', tokens: 600000, cost: 20.0, percentage: 50, days_active: 25 },
+            {
+              model: 'claude-3-5-sonnet',
+              tokens: 600000,
+              cost: 20.0,
+              percentage: 50,
+              days_active: 25,
+            },
             { model: 'gpt-4o', tokens: 500000, cost: 15.0, percentage: 50, days_active: 20 },
           ],
         },

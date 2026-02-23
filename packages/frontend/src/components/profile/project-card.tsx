@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-
 import type { ProjectResponse } from '@/api/generated.schemas';
 import type { ElementType } from 'react';
 

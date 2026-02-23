@@ -116,7 +116,9 @@ function BarTooltip({ active, payload }: BarTooltipProps) {
 
   return (
     <div className="bg-bg-elevated border border-border-default rounded-xl p-3 shadow-xl">
-      <div className="font-medium text-text-primary mb-1">{formatModelName(data.payload.model)}</div>
+      <div className="font-medium text-text-primary mb-1">
+        {formatModelName(data.payload.model)}
+      </div>
       <div className="flex items-center gap-2 text-sm">
         <DollarSign className="w-3.5 h-3.5 text-green-500" />
         <span className="font-mono text-text-primary">${formatCost(data.value)}</span>
@@ -155,13 +157,11 @@ export function DashboardModels() {
     }));
 
     // Prepare cost bar chart data (top 6 models)
-    const costData = data.models
-      .slice(0, 6)
-      .map((model: ModelUsageData) => ({
-        model: model.model,
-        cost: model.cost,
-        displayName: formatModelName(model.model).slice(0, 12),
-      }));
+    const costData = data.models.slice(0, 6).map((model: ModelUsageData) => ({
+      model: model.model,
+      cost: model.cost,
+      displayName: formatModelName(model.model).slice(0, 12),
+    }));
 
     return { pieData, costData, totalTokens, totalCost };
   }, [data]);
@@ -361,9 +361,7 @@ export function DashboardModels() {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-right">
-                    <span className="font-mono text-text-primary">
-                      ${formatCost(model.cost)}
-                    </span>
+                    <span className="font-mono text-text-primary">${formatCost(model.cost)}</span>
                   </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex items-center justify-end gap-2">

@@ -66,7 +66,12 @@ export const Route = createFileRoute('/api/og/$username/weekly')({
               status: statsResponse.status,
               headers: {
                 ...createImageHeaders(300), // Cache errors for 5 minutes
-                'X-Error-Type': statsResponse.status === 404 ? 'not_found' : statsResponse.status === 403 ? 'private' : 'server_error',
+                'X-Error-Type':
+                  statsResponse.status === 404
+                    ? 'not_found'
+                    : statsResponse.status === 403
+                      ? 'private'
+                      : 'server_error',
               },
             });
           }
@@ -131,7 +136,10 @@ export const Route = createFileRoute('/api/og/$username/weekly')({
           );
 
           if (!weeklyValidation.isValid || !weeklyValidation.data) {
-            console.error(`[OG] Invalid weekly estimates for user ${username}:`, weeklyValidation.error);
+            console.error(
+              `[OG] Invalid weekly estimates for user ${username}:`,
+              weeklyValidation.error
+            );
 
             const errorCard = ErrorCardTemplate({
               errorType: 'invalid_data',
@@ -191,10 +199,7 @@ export const Route = createFileRoute('/api/og/$username/weekly')({
 
           // Calculate week-over-week growth (estimate as positive trend if streak is increasing)
           // Without historical data, we'll show modest growth if they have an active streak
-          const weekOverWeekGrowth = safeNumber(
-            validatedStats.current_streak > 0 ? 15.5 : 0,
-            0
-          );
+          const weekOverWeekGrowth = safeNumber(validatedStats.current_streak > 0 ? 15.5 : 0, 0);
 
           // Calculate week date range
           const weekEnd = new Date();

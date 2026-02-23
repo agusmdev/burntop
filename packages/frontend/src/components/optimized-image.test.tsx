@@ -34,9 +34,7 @@ describe('OptimizedImage', () => {
   });
 
   it('applies width and height when provided', () => {
-    render(
-      <OptimizedImage src="/test.jpg" alt="Test image" width={800} height={600} />
-    );
+    render(<OptimizedImage src="/test.jpg" alt="Test image" width={800} height={600} />);
 
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('width', '800');
@@ -52,34 +50,21 @@ describe('OptimizedImage', () => {
   });
 
   it('applies custom className', () => {
-    render(
-      <OptimizedImage src="/test.jpg" alt="Test image" className="custom-image" />
-    );
+    render(<OptimizedImage src="/test.jpg" alt="Test image" className="custom-image" />);
 
     const img = screen.getByRole('img');
     expect(img).toHaveClass('custom-image');
   });
 
   it('handles external URLs', () => {
-    render(
-      <OptimizedImage
-        src="https://example.com/image.jpg"
-        alt="External image"
-      />
-    );
+    render(<OptimizedImage src="https://example.com/image.jpg" alt="External image" />);
 
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
   });
 
   it('combines multiple classNames', () => {
-    render(
-      <OptimizedImage
-        src="/test.jpg"
-        alt="Test image"
-        className="class1 class2"
-      />
-    );
+    render(<OptimizedImage src="/test.jpg" alt="Test image" className="class1 class2" />);
 
     const img = screen.getByRole('img');
     expect(img).toHaveClass('class1');

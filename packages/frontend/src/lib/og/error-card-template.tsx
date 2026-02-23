@@ -67,7 +67,7 @@ function getErrorDetails(
         title: 'No Data Available',
         message: username
           ? `@${username} doesn't have enough activity data to display stats yet.`
-          : "Not enough activity data to display stats yet.",
+          : 'Not enough activity data to display stats yet.',
         emoji: '📊',
       };
     default:
