@@ -82,9 +82,7 @@ function PieTooltip({ active, payload }: PieTooltipProps) {
         </div>
         <div className="flex items-center justify-between gap-4">
           <span className="text-text-secondary">Share</span>
-          <span className="font-mono text-text-primary">
-            {data.payload.percentage.toFixed(1)}%
-          </span>
+          <span className="font-mono text-text-primary">{data.payload.percentage.toFixed(1)}%</span>
         </div>
       </div>
     </div>
@@ -359,9 +357,7 @@ export function DashboardTools() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <span className="font-mono text-text-primary">
-                        ${formatCost(tool.cost)}
-                      </span>
+                      <span className="font-mono text-text-primary">${formatCost(tool.cost)}</span>
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">

@@ -132,7 +132,7 @@ The CLI automatically detects and parses usage data from:
 | **Droid**       | `~/.factory/sessions/*.settings.json`                  | Session files              |
 | **Gemini CLI**  | `~/.gemini/tmp/*/chats/session-*.json`                 | Session files              |
 | **Kilo Code**   | VS Code `globalStorage/kilocode.kilo-code/`            | VS Code extension          |
-| **OpenCode**    | `~/.local/share/opencode/storage/message/`             | Message storage            |
+| **OpenCode**    | `~/.local/share/opencode/opencode.db`                  | SQLite (fallback JSON)     |
 | **Roo Code**    | VS Code `globalStorage/rooveterinaryinc.roo-cline/`    | VS Code extension          |
 
 Don't see your tool? [Open an issue](https://github.com/agusmdev/burntop/issues) and we'll add it!

@@ -180,9 +180,7 @@ describe('DashboardInsights', () => {
     expect(
       screen.getByText(/You've used 1,500,000 tokens, which is above the community average!/i)
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Your 7 day streak is impressive/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Your 7 day streak is impressive/i)).toBeInTheDocument();
   });
 
   it('shows percentile badges', () => {

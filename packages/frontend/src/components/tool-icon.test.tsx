@@ -1,13 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import {
-  formatToolName,
-  getToolColor,
-  getToolConfig,
-  ToolBadge,
-  ToolIcon,
-} from './tool-icon';
+import { formatToolName, getToolColor, getToolConfig, ToolBadge, ToolIcon } from './tool-icon';
 
 describe('getToolConfig', () => {
   it('returns config for known tools', () => {
@@ -124,9 +118,7 @@ describe('ToolIcon', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(
-      <ToolIcon source="cursor" className="custom-icon" />
-    );
+    const { container } = render(<ToolIcon source="cursor" className="custom-icon" />);
 
     expect(container.firstChild).toHaveClass('custom-icon');
   });
@@ -173,9 +165,7 @@ describe('ToolBadge', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(
-      <ToolBadge source="cursor" className="custom-badge" />
-    );
+    const { container } = render(<ToolBadge source="cursor" className="custom-badge" />);
 
     expect(container.firstChild).toHaveClass('custom-badge');
   });

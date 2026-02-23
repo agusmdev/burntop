@@ -6,9 +6,10 @@
  */
 
 import { execSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { createInterface } from 'node:readline';
 
 const BURNTOP_DIR = join(homedir(), '.burntop');
 const SYNC_LOG_FILE = join(BURNTOP_DIR, 'sync.log');
@@ -92,8 +93,7 @@ function writeCrontab(content: string): void {
 }
 
 async function promptYesNo(question: string): Promise<boolean> {
-  const readline = require('node:readline');
-  const rl = readline.createInterface({
+  const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
   });

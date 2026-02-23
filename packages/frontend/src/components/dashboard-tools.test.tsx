@@ -64,9 +64,7 @@ describe('DashboardTools', () => {
     render(<DashboardTools />, { wrapper: createWrapper() });
 
     expect(screen.getByText('No tool usage data available')).toBeInTheDocument();
-    expect(
-      screen.getByText('Start using AI tools to see your tool breakdown')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Start using AI tools to see your tool breakdown')).toBeInTheDocument();
   });
 
   it('renders tool distribution chart with data', () => {
@@ -76,7 +74,13 @@ describe('DashboardTools', () => {
         data: {
           tools: [
             { source: 'cursor', tokens: 800000, cost: 25.0, percentage: 53.3, days_active: 25 },
-            { source: 'claude-code', tokens: 500000, cost: 15.0, percentage: 33.3, days_active: 20 },
+            {
+              source: 'claude-code',
+              tokens: 500000,
+              cost: 15.0,
+              percentage: 33.3,
+              days_active: 20,
+            },
             { source: 'chatgpt', tokens: 200000, cost: 5.67, percentage: 13.4, days_active: 10 },
           ],
         },
@@ -100,7 +104,13 @@ describe('DashboardTools', () => {
         data: {
           tools: [
             { source: 'cursor', tokens: 800000, cost: 25.0, percentage: 53.3, days_active: 25 },
-            { source: 'claude-code', tokens: 500000, cost: 15.0, percentage: 33.3, days_active: 20 },
+            {
+              source: 'claude-code',
+              tokens: 500000,
+              cost: 15.0,
+              percentage: 33.3,
+              days_active: 20,
+            },
           ],
         },
       },
@@ -143,7 +153,13 @@ describe('DashboardTools', () => {
         data: {
           tools: [
             { source: 'cursor', tokens: 800000, cost: 25.0, percentage: 53.3, days_active: 25 },
-            { source: 'claude-code', tokens: 500000, cost: 15.0, percentage: 33.3, days_active: 20 },
+            {
+              source: 'claude-code',
+              tokens: 500000,
+              cost: 15.0,
+              percentage: 33.3,
+              days_active: 20,
+            },
           ],
         },
       },

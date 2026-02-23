@@ -67,18 +67,14 @@ describe('FollowersAvatarStack', () => {
   });
 
   it('shows remaining count when there are more followers', () => {
-    render(
-      <FollowersAvatarStack followers={mockFollowers} maxDisplay={3} totalCount={10} />
-    );
+    render(<FollowersAvatarStack followers={mockFollowers} maxDisplay={3} totalCount={10} />);
 
     // Should show "+7" (10 - 3)
     expect(screen.getByText('+7')).toBeInTheDocument();
   });
 
   it('caps remaining count at 99+', () => {
-    render(
-      <FollowersAvatarStack followers={mockFollowers} maxDisplay={3} totalCount={150} />
-    );
+    render(<FollowersAvatarStack followers={mockFollowers} maxDisplay={3} totalCount={150} />);
 
     // Should show "+99" not "+147"
     expect(screen.getByText('+99')).toBeInTheDocument();
@@ -108,9 +104,7 @@ describe('FollowersAvatarStack', () => {
 
   it('shows ? for empty name', () => {
     render(
-      <FollowersAvatarStack
-        followers={[{ id: '1', username: '', name: null, image: null }]}
-      />
+      <FollowersAvatarStack followers={[{ id: '1', username: '', name: null, image: null }]} />
     );
 
     // Should show "?"
@@ -120,10 +114,7 @@ describe('FollowersAvatarStack', () => {
   describe('size variants', () => {
     it('applies small size styles', () => {
       const { container } = render(
-        <FollowersAvatarStack
-          followers={mockFollowers.slice(0, 2)}
-          size="sm"
-        />
+        <FollowersAvatarStack followers={mockFollowers.slice(0, 2)} size="sm" />
       );
 
       const avatars = container.querySelectorAll('.h-6.w-6');
@@ -132,10 +123,7 @@ describe('FollowersAvatarStack', () => {
 
     it('applies medium size styles (default)', () => {
       const { container } = render(
-        <FollowersAvatarStack
-          followers={mockFollowers.slice(0, 2)}
-          size="md"
-        />
+        <FollowersAvatarStack followers={mockFollowers.slice(0, 2)} size="md" />
       );
 
       const avatars = container.querySelectorAll('.h-8.w-8');
@@ -144,10 +132,7 @@ describe('FollowersAvatarStack', () => {
 
     it('applies large size styles', () => {
       const { container } = render(
-        <FollowersAvatarStack
-          followers={mockFollowers.slice(0, 2)}
-          size="lg"
-        />
+        <FollowersAvatarStack followers={mockFollowers.slice(0, 2)} size="lg" />
       );
 
       const avatars = container.querySelectorAll('.h-10.w-10');
@@ -157,10 +142,7 @@ describe('FollowersAvatarStack', () => {
 
   it('applies custom className', () => {
     const { container } = render(
-      <FollowersAvatarStack
-        followers={mockFollowers.slice(0, 2)}
-        className="custom-stack"
-      />
+      <FollowersAvatarStack followers={mockFollowers.slice(0, 2)} className="custom-stack" />
     );
 
     expect(container.firstChild).toHaveClass('custom-stack');

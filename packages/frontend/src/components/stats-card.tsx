@@ -164,9 +164,7 @@ export function StatsCard({
         </div>
 
         {/* Sublabel */}
-        {sublabel && (
-          <p className="mt-2 text-xs text-text-tertiary/80 font-medium">{sublabel}</p>
-        )}
+        {sublabel && <p className="mt-2 text-xs text-text-tertiary/80 font-medium">{sublabel}</p>}
       </div>
 
       {/* Corner accent for ember variant */}

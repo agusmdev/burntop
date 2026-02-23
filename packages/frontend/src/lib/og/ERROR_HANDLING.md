@@ -9,42 +9,51 @@ The OG image generation system handles various error scenarios gracefully by ren
 ## Error Types
 
 ### 1. User Not Found (404)
+
 **Trigger:** User doesn't exist in the database or hasn't created a profile yet.
 
 **Response:**
+
 - HTTP Status: 404
 - Error Card: "User Not Found" with 🔍 emoji
 - Message: "The user @username doesn't exist or hasn't set up their profile yet."
 - Cache: 5 minutes
 
 **Example:**
+
 ```
 GET /api/og/nonexistent-user/stats
 → Returns PNG with "User Not Found" error card
 ```
 
 ### 2. Private Profile (403)
+
 **Trigger:** User's profile is marked as private and cannot be shared publicly.
 
 **Response:**
+
 - HTTP Status: 403
 - Error Card: "Private Profile" with 🔒 emoji
 - Message: "@username's profile is private and cannot be shared publicly."
 - Cache: 5 minutes
 
 ### 3. Server Error (500)
+
 **Trigger:** Backend API error, network failure, or unexpected server issue.
 
 **Response:**
+
 - HTTP Status: 500
 - Error Card: "Something Went Wrong" with ⚠️ emoji
 - Message: "Unable to generate stats image. Please try again later."
 - Cache: 1 minute
 
 ### 4. Invalid Data
+
 **Trigger:** User has no activity data, or data fails validation checks.
 
 **Response:**
+
 - HTTP Status: 200 (user exists but has no data) or 500 (validation failed)
 - Error Card: "No Data Available" with 📊 emoji
 - Message: "@username doesn't have enough activity data to display stats yet."
@@ -55,12 +64,14 @@ GET /api/og/nonexistent-user/stats
 ### Stats Data Validation
 
 The `validateStatsData()` function checks:
+
 - ✅ Required fields are present (username, total_tokens, etc.)
 - ✅ Numeric fields are non-negative
 - ✅ Cache efficiency is in valid range (0-100) if present
 - ✅ No NaN or Infinity values
 
 **Example:**
+
 ```typescript
 const validation = validateStatsData(statsData);
 if (!validation.isValid) {
@@ -71,10 +82,12 @@ if (!validation.isValid) {
 ### Minimum Activity Check
 
 The `hasMinimumActivityData()` function ensures users have:
+
 - At least 1 token used, OR
 - At least 1 unique activity day
 
 **Example:**
+
 ```typescript
 if (!hasMinimumActivityData(statsData)) {
   // Show "No Data Available" error card
@@ -84,6 +97,7 @@ if (!hasMinimumActivityData(statsData)) {
 ### Weekly Data Validation
 
 For weekly recap images:
+
 - `validateWeeklyEstimates()`: Ensures weekly tokens don't exceed monthly
 - `validateDaysActive()`: Clamps days to 0-7 range
 
@@ -92,6 +106,7 @@ For weekly recap images:
 The `ErrorCardTemplate` component renders beautiful, branded error states:
 
 **Features:**
+
 - Consistent branding with burntop.dev design system
 - Large emoji icon for visual clarity
 - Clear error title and message
@@ -99,6 +114,7 @@ The `ErrorCardTemplate` component renders beautiful, branded error states:
 - Matches OG image dimensions (1200x630)
 
 **Usage:**
+
 ```typescript
 const errorCard = ErrorCardTemplate({
   errorType: 'not_found',
@@ -120,11 +136,13 @@ The system implements a multi-level fallback approach:
 ## HTTP Response Headers
 
 All OG image responses include:
+
 - `Content-Type`: `image/png` (or `image/svg+xml` for fallback)
 - `Cache-Control`: Appropriate caching based on error type
 - `X-Error-Type`: Custom header indicating error category (for debugging)
 
 **Cache Duration:**
+
 - Success: 1 hour (3600s)
 - Not Found/Private: 5 minutes (300s)
 - Server Error: 1 minute (60s)
@@ -133,6 +151,7 @@ All OG image responses include:
 ## Safe Fallback Utilities
 
 ### `safeNumber(value, fallback = 0)`
+
 Returns a valid number or fallback value.
 
 ```typescript
@@ -141,6 +160,7 @@ const cost = safeNumber(statsData.total_cost, 0);
 ```
 
 ### `safeString(value, fallback = '')`
+
 Returns a valid string or fallback value.
 
 ```typescript
@@ -149,6 +169,7 @@ const username = safeString(statsData.username, 'unknown');
 ```
 
 ### `getSafeCacheEfficiency(statsData)`
+
 Returns cache efficiency if valid (0-100) or undefined.
 
 ```typescript
@@ -167,9 +188,12 @@ const statsResponse = await fetch(`${API_BASE_URL}/api/v1/users/${username}/stat
 if (!statsResponse.ok) {
   // Render appropriate error card based on status code
   const errorCard = ErrorCardTemplate({
-    errorType: statsResponse.status === 404 ? 'not_found' :
-                statsResponse.status === 403 ? 'private' :
-                'server_error',
+    errorType:
+      statsResponse.status === 404
+        ? 'not_found'
+        : statsResponse.status === 403
+          ? 'private'
+          : 'server_error',
     username,
   });
 
@@ -207,12 +231,14 @@ const daysValidation = validateDaysActive(rawDaysActive);
 ## Testing
 
 Comprehensive test coverage includes:
+
 - Unit tests for validation functions (`validate-data.test.ts`)
 - Component tests for error card template (`error-card-template.test.tsx`)
 - Edge cases: negative values, NaN, Infinity, null, undefined
 - Boundary conditions: cache efficiency 0-100, days active 0-7
 
 **Run tests:**
+
 ```bash
 cd packages/frontend
 npm test -- src/lib/og/validate-data.test.ts
@@ -235,6 +261,7 @@ To debug OG image errors:
 ## Future Enhancements
 
 Potential improvements:
+
 - [ ] Rate limiting error cards for abuse prevention
 - [ ] Telemetry/analytics for error tracking
 - [ ] Retry logic with exponential backoff

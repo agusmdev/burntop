@@ -27,6 +27,7 @@ npm run test:e2e
 ## Test Results Location
 
 After running tests:
+
 - **Console Output**: Shows pass/fail for each test
 - **HTML Report**: Run `npx playwright show-report` to view detailed results
 - **Screenshots**: Failures are captured in `test-results/`
@@ -34,16 +35,20 @@ After running tests:
 ## Troubleshooting
 
 ### "Cannot find test user"
+
 → Create a test user in your database or change the username in the test file:
+
 ```typescript
 // In tests/sharing-verification.spec.ts
 const testUsername = 'your-actual-username';
 ```
 
 ### "Connection refused"
+
 → Make sure both backend (port 8000) and frontend (port 3000) are running
 
 ### "Playwright not found"
+
 → Run the setup script: `./tests/setup-playwright.sh`
 
 ## Next Task (T009)

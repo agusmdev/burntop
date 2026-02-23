@@ -63,12 +63,8 @@ describe('DashboardTrends', () => {
 
     render(<DashboardTrends />, { wrapper: createWrapper() });
 
-    expect(
-      screen.getByText('No usage data available for the past 30 days')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText('Start using AI tools to see your trends here')
-    ).toBeInTheDocument();
+    expect(screen.getByText('No usage data available for the past 30 days')).toBeInTheDocument();
+    expect(screen.getByText('Start using AI tools to see your trends here')).toBeInTheDocument();
   });
 
   it('renders usage over time chart with data', () => {
@@ -77,9 +73,27 @@ describe('DashboardTrends', () => {
         status: 200,
         data: {
           daily_data: [
-            { date: '2024-01-01', tokens: 50000, cost: 1.5, input_tokens: 30000, output_tokens: 20000 },
-            { date: '2024-01-02', tokens: 75000, cost: 2.25, input_tokens: 45000, output_tokens: 30000 },
-            { date: '2024-01-03', tokens: 100000, cost: 3.0, input_tokens: 60000, output_tokens: 40000 },
+            {
+              date: '2024-01-01',
+              tokens: 50000,
+              cost: 1.5,
+              input_tokens: 30000,
+              output_tokens: 20000,
+            },
+            {
+              date: '2024-01-02',
+              tokens: 75000,
+              cost: 2.25,
+              input_tokens: 45000,
+              output_tokens: 30000,
+            },
+            {
+              date: '2024-01-03',
+              tokens: 100000,
+              cost: 3.0,
+              input_tokens: 60000,
+              output_tokens: 40000,
+            },
           ],
         },
       },

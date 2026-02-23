@@ -10,11 +10,15 @@
  */
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { hostname, networkInterfaces } from 'node:os';
 import { join } from 'node:path';
 
-const CONFIG_DIR = join(process.env['HOME'] || process.env['USERPROFILE'] || '', '.config', 'burntop');
+const CONFIG_DIR = join(
+  process.env['HOME'] || process.env['USERPROFILE'] || '',
+  '.config',
+  'burntop'
+);
 const MACHINE_ID_FILE = join(CONFIG_DIR, 'machine-id');
 
 /**
@@ -125,7 +129,6 @@ export function getMachineIdPath(): string {
 export function resetMachineId(): void {
   try {
     if (existsSync(MACHINE_ID_FILE)) {
-      const { unlinkSync } = require('node:fs');
       unlinkSync(MACHINE_ID_FILE);
     }
   } catch {

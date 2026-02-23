@@ -61,6 +61,7 @@ The Playwright configuration is in `playwright.config.ts`. Key settings:
 Before running the tests, ensure:
 
 1. **Backend is running**: The tests expect the FastAPI backend to be running at `http://localhost:8000`
+
    ```bash
    cd packages/backend
    uv run uvicorn src.app.main:app --reload --port 8000

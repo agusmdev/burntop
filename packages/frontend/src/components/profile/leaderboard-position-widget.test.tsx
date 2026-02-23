@@ -37,9 +37,7 @@ describe('LeaderboardPositionWidget', () => {
     render(<LeaderboardPositionWidget entry={null} />);
 
     expect(screen.getByText('Not ranked yet')).toBeInTheDocument();
-    expect(
-      screen.getByText('Sync your usage to appear on the leaderboard')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Sync your usage to appear on the leaderboard')).toBeInTheDocument();
   });
 
   it('displays rank with # prefix', () => {
@@ -112,27 +110,21 @@ describe('LeaderboardPositionWidget', () => {
 
   describe('rank styling', () => {
     it('applies gold styling for rank 1', () => {
-      const { container } = render(
-        <LeaderboardPositionWidget entry={{ ...mockEntry, rank: 1 }} />
-      );
+      const { container } = render(<LeaderboardPositionWidget entry={{ ...mockEntry, rank: 1 }} />);
 
       const link = container.querySelector('a');
       expect(link).toHaveClass('text-amber-400');
     });
 
     it('applies silver styling for rank 2', () => {
-      const { container } = render(
-        <LeaderboardPositionWidget entry={{ ...mockEntry, rank: 2 }} />
-      );
+      const { container } = render(<LeaderboardPositionWidget entry={{ ...mockEntry, rank: 2 }} />);
 
       const link = container.querySelector('a');
       expect(link).toHaveClass('text-gray-300');
     });
 
     it('applies bronze styling for rank 3', () => {
-      const { container } = render(
-        <LeaderboardPositionWidget entry={{ ...mockEntry, rank: 3 }} />
-      );
+      const { container } = render(<LeaderboardPositionWidget entry={{ ...mockEntry, rank: 3 }} />);
 
       const link = container.querySelector('a');
       expect(link).toHaveClass('text-amber-600');
@@ -175,9 +167,7 @@ describe('LeaderboardPositionWidgetSkeleton', () => {
   });
 
   it('applies custom className', () => {
-    const { container } = render(
-      <LeaderboardPositionWidgetSkeleton className="custom-skeleton" />
-    );
+    const { container } = render(<LeaderboardPositionWidgetSkeleton className="custom-skeleton" />);
 
     expect(container.firstChild).toHaveClass('custom-skeleton');
   });
